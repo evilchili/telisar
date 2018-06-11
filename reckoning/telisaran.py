@@ -4,39 +4,47 @@ Primitives for the Telisaran reckoning of dates and time.
 from abc import ABC, abstractmethod
 
 
-class InvalidEraError(Exception):
+class ReckoningError(Exception):
     pass
 
 
-class InvalidYearError(Exception):
+class InvalidEraError(ReckoningError):
     pass
 
 
-class InvalidSeasonError(Exception):
+class InvalidYearError(ReckoningError):
     pass
 
 
-class InvalidSpanError(Exception):
+class InvalidSeasonError(ReckoningError):
     pass
 
 
-class InvalidDayError(Exception):
+class InvalidSpanError(ReckoningError):
     pass
 
 
-class InvalidHourError(Exception):
+class InvalidDayError(ReckoningError):
     pass
 
 
-class InvalidMinuteError(Exception):
+class InvalidHourError(ReckoningError):
     pass
 
 
-class InvalidDateError(Exception):
+class InvalidMinuteError(ReckoningError):
     pass
 
 
-class MissingSeasonError(Exception):
+class InvalidSecondError(ReckoningError):
+    pass
+
+
+class InvalidDateError(ReckoningError):
+    pass
+
+
+class MissingSeasonError(ReckoningError):
     pass
 
 
@@ -51,7 +59,7 @@ def _suffix(n):
         return 'th'
 
 
-class DateObject(ABC):
+class DateObject(ABC):  # pragma: no cover
     """
     Base class for all date components. This ABC implements basic arithmetic operator support for
     all DateObjects as integer seconds since the beginning of time. If the current instance has a
@@ -89,6 +97,18 @@ class DateObject(ABC):
 
     def __eq__(self, other):
         return int(self) == int(other)
+
+    def __gt__(self, other):
+        return not self.__le__(other)
+
+    def __lt__(self, other):
+        return not self.__ge__(other)
+
+    def __ge__(self, other):
+        return int(self) >= int(other)
+
+    def __le__(self, other):
+        return int(self) <= int(other)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -147,10 +167,10 @@ class datetime(DateObject):
             self.season = Season(season_of_year=season, year=self.year.year)
         self.day = Day(day, season=self.season)
         self.hour = Hour(hour)
-        self.minute = Minute(hour)
+        self.minute = Minute(minute)
 
         if second < 0 or second > 59:
-            raise InvalidDateError("second {} must be between 0 and 59")
+            raise InvalidSecondError("second {} must be between 0 and 59".format(second))
         self.second = second
 
     @property
@@ -227,7 +247,7 @@ class datetime(DateObject):
 
     @property
     def as_seconds(self):
-        return sum(map(int, [self.era, self.year, self.season, self.day]))
+        return sum(map(int, [self.era, self.year, self.season, self.day, self.hour, self.minute, self.second]))
 
     @property
     def number(self):
@@ -235,9 +255,9 @@ class datetime(DateObject):
 
     def __repr__(self):
         return (
-            "<Date: year={0.year}, season={0.season.season_of_year}, day={0.day.day_of_season}, "
-            "span={0.day.span}, era={0.era}, hour={0.hour}, minute={0.minute}, second={0.second}>:"
-            " {0.short}".format(self)
+            "<Date: era={0.era}, year={0.year}, season={0.season.season_of_year}, "
+            "day={0.day.day_of_season}, span={0.day.span}, "
+            "hour={0.hour}, minute={0.minute}, second={0.second}>: {0.short}".format(self)
         )
 
     @classmethod
@@ -245,25 +265,32 @@ class datetime(DateObject):
         """
         Return a datetime object corresponding to the given number of seconds since the beginning.
         """
-        era = int(seconds / Era.length_in_seconds)
-        e_sec = era * Era.length_in_seconds
 
-        year = int((seconds - e_sec) / Year.length_in_seconds)
+        for (era, years) in enumerate(Era.years):
+            if years is None:
+                break
+            era_length = years * Year.length_in_seconds
+            if seconds > era_length:
+                seconds -= era_length
+            else:
+                break
+
+        year = int((seconds) / Year.length_in_seconds)
         y_sec = year * Year.length_in_seconds
 
-        season = int((seconds - e_sec - y_sec) / Season.length_in_seconds)
+        season = int((seconds - y_sec) / Season.length_in_seconds)
         s_sec = season * Season.length_in_seconds
 
-        day = int((seconds - e_sec - y_sec - s_sec) / Day.length_in_seconds)
+        day = int((seconds - y_sec - s_sec) / Day.length_in_seconds)
         d_sec = day * Day.length_in_seconds
 
-        hour = int((seconds - e_sec - y_sec - s_sec - d_sec) / Hour.length_in_seconds)
+        hour = int((seconds - y_sec - s_sec - d_sec) / Hour.length_in_seconds)
         h_sec = hour * Hour.length_in_seconds
 
-        minute = int((seconds - e_sec - y_sec - s_sec - d_sec - h_sec) / Minute.length_in_seconds)
+        minute = int((seconds - y_sec - s_sec - d_sec - h_sec) / Minute.length_in_seconds)
         m_sec = minute * Minute.length_in_seconds
 
-        seconds = seconds - e_sec - y_sec - s_sec - d_sec - h_sec - m_sec
+        seconds = seconds - y_sec - s_sec - d_sec - h_sec - m_sec
 
         return cls(
             era=era + 1,
@@ -291,7 +318,7 @@ class Minute(DateObject):
 
     def __init__(self, minute):
         if minute < 0 or minute > 59:
-            raise InvalidHourError("minute {} must be between 0 and 59")
+            raise InvalidMinuteError("minute {} must be between 0 and 59")
         self.minute = minute
 
     @property
@@ -397,15 +424,6 @@ class Day(DateObject):
         else:
             return Day.names[self.day_of_span - 1]
 
-    def as_date(self):
-        """
-        Return a new Date object representing this day. The instance must have a season attribute.
-        """
-        try:
-            return datetime(year=int(self.season.year), season=int(self.season), day=int(self))
-        except AttributeError:
-            raise MissingSeasonError("You must assign a season to this Day instance.")
-
     def __repr__(self):
         return self.name
 
@@ -446,9 +464,7 @@ class Season(DateObject):
     length_in_seconds = length_in_days * Day.length_in_seconds
 
     def __init__(self, season_of_year, year):
-        if season_of_year == len(Season.names) + 1:
-            return FestivalOfTheHunt(year)
-        elif season_of_year < 1 or season_of_year > len(Season.names):
+        if season_of_year < 1 or season_of_year > len(Season.names):
             raise InvalidSeasonError("season_of_year {} must be between 1 and {}".format(
                 season_of_year, len(Season.names)))
         self.season_of_year = season_of_year
@@ -514,6 +530,9 @@ class FestivalOfTheHunt(Season):
     def name(self):
         return "Festival Of The Hunt"
 
+    def __int__(self):
+        return (self.season_of_year - 1) * Season.length_in_seconds
+
     def __str__(self):
         return "the {}".format(self.name)
 
@@ -554,7 +573,7 @@ class Year(DateObject):
         if year < 1:
             raise InvalidYearError("Years must be greater than 1.")
         if self.era.end and year > self.era.end:
-            raise InvalidYearError("The {} ended in {}".format(self.era.name, self.era.end))
+            raise InvalidYearError("The {} ended in {}".format(self.era.long, self.era.end))
         self.year = year
         self.seasons = [Season(i, self) for i in range(1, Year.length_in_seasons + 1)]
         self.seasons.append(FestivalOfTheHunt(self))
@@ -583,8 +602,7 @@ class Era(DateObject):
     """
     long_names = ['Ancient Era', 'Old Era', 'Modern Era']
     short_names = ['AE', 'OE', 'ME']
-
-    length_in_seconds = 10000 * Year.length_in_seconds
+    years = [20000, 10000, None]
 
     def __init__(self, era, end=None):
         """
@@ -592,10 +610,11 @@ class Era(DateObject):
             era (int): The number of the era; must be between 1 and 3.
             end (year): The last year of the era
         """
-        if era < 1 or era > len(Era.long_names) + 1:
-            raise InvalidEraError("Eras must be between 0 and {}".format(len(Era.long_names)))
+        if era < 1 or era > len(Era.long_names):
+            raise InvalidEraError("{}: Eras must be between 0 and {}".format(era, len(Era.long_names)))
         self.era = era
-        self.end = end
+        self.end = Era.years[self.era - 1]
+        self.length_in_seconds = sum(Era.years[:self.era - 1]) * Year.length_in_seconds
 
     @property
     def short(self):
@@ -609,12 +628,8 @@ class Era(DateObject):
     def number(self):
         return self.era
 
+    def __int__(self):
+        return self.length_in_seconds
+
     def __repr__(self):
         return self.long
-
-
-eras = [
-    Era(1, end=20000),
-    Era(2, end=10000),
-    Era(3, end=None)
-]
