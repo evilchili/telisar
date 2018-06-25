@@ -711,7 +711,7 @@ class parser:
         ),
 
         # at <start>
-        re.compile(r'(?P<modifier>at)\s+(?P<start>.*)'),
+        re.compile(r'(?P<modifier>on|at)\s+(?P<start>.*)'),
     ]
 
     def __init__(self, now=None, timeline={}):
@@ -795,7 +795,8 @@ class parser:
         # the start might be a datetime instane defined by this module ('yesterday', 'today', etc)
         try:
             return [
-                i for i in inspect.getmembers(sys.modules[__name__]) if isinstance(i[1], datetime)
+                i for i in inspect.getmembers(sys.modules[__name__])
+                if isinstance(i[1], datetime) and str(i[0]).lower() == expression.lower()
             ][0][1]
         except IndexError:
             pass
