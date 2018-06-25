@@ -2,9 +2,16 @@
 Primitives for the Telisaran reckoning of dates and time.
 """
 from abc import ABC, abstractmethod
+import inspect
+import sys
+import re
 
 
 class ReckoningError(Exception):
+    pass
+
+
+class ParseError(ReckoningError):
     pass
 
 
@@ -143,6 +150,7 @@ class datetime(DateObject):
         long (str): The long representation of the date and time
         short (str): The short representation of the date and time
         numeric (str): The dotted numeric representation of the date and time
+        numeric_date (str): The dotted numeric representation of the date (no time)
         date (str): The shorthand representation of the day and date
         time_long (str): The long form of the time, including names of hours
         time_short (str): The short form of the time
@@ -206,6 +214,13 @@ class datetime(DateObject):
         ).format(self)
 
     @property
+    def numeric_date(self):
+        return (
+            "{0.era.number}.{0.year.number}.{0.season.number}."
+            "{0.day.day_of_season:02d}"
+        ).format(self)
+
+    @property
     def date(self):
         if self.season.number == 9:
             season = 'H'
@@ -261,11 +276,14 @@ class datetime(DateObject):
         )
 
     @classmethod
+    def from_expression(cls, expression, now=None, timeline=None):
+        return parser(now=now, timeline=timeline).parse(expression)
+
+    @classmethod
     def from_seconds(cls, seconds):
         """
         Return a datetime object corresponding to the given number of seconds since the beginning.
         """
-
         for (era, years) in enumerate(Era.years):
             if years is None:
                 break
@@ -633,3 +651,216 @@ class Era(DateObject):
 
     def __repr__(self):
         return self.long
+
+
+class parser:
+    """
+    A lexical date expression parser that can understand various relative dates. Some examples:
+
+    2 days before 3.3206.3.36
+    11 spans later than now
+    yesterday
+    tomorrow
+    2 days after tomorrow
+    11 spans later than now
+    yesterday
+    1000 years ago
+    on 1.193.1.1
+    at 2.4839.7.22
+
+    If initialized with a timeline, the parser will also support references to events:
+
+    36 hours before campaign start
+    11 spans after the party returns from the feywild
+
+    Class Attributes:
+
+        future_modifiers (list): list of phrases that indicate a positive (future) date
+        past_modifiers (list): list of phrases that indicate a negative (past) date
+        patterns (list): A list of regular expression objects that will be used, in order, to parse
+            the date expressions
+
+    Instance Attributes:
+        now (int): the date relative to which dates will be calculated, in seconds.
+        timeline (dict): A dictionary of event datetimes
+
+    """
+
+    future_modifiers = [
+        'from',
+        'after',
+        'later than',
+    ]
+
+    past_modifiers = [
+        'before',
+        'ago',
+        'earlier than',
+        'prior to',
+    ]
+
+    patterns = [
+        # <value> <unit> <modifier> <start>
+        re.compile(
+            r'(?P<value>\d+)\s*' +
+            r'(?P<unit>\w+)\s+' +
+            r'(?P<modifier>{}|{})'.format(
+                '|'.join(future_modifiers),
+                '|'.join(past_modifiers)) +
+            r'(?P<start>.*)',
+        ),
+
+        # at <start>
+        re.compile(r'(?P<modifier>at)\s+(?P<start>.*)'),
+    ]
+
+    def __init__(self, now=None, timeline={}):
+        """
+        Constructor
+
+        Args:
+            now (datetime): the date against which calculate the relative date
+            timeline (dict): a dictionary of event datetimes keyed by description
+        """
+        self.timeline = timeline
+
+        if not now:
+            self.now = today.as_seconds
+        else:
+            try:
+                self.now = self.timeline[str(now)].as_seconds
+            except KeyError:
+                self.now = int(now)
+
+    def parse(self, expression):
+        """
+        Parse an expression and return a datetime object computed relative to 'now'.
+
+        Args:
+            expression (str): The expression to parse.
+
+        Returns:
+            datetime: A datetime object
+        """
+        for pattern in parser.patterns:
+            m = pattern.match(expression)
+            if m:
+                return datetime.from_seconds(self.calculate_date(**m.groupdict()))
+        raise ParseError("Could not parse expression '{}' using any pattern".format(
+            expression))
+
+    def _parse_value(self, value, unit):
+        """
+        Convert a value into integer seconds.
+
+        Args:
+            value (int): the value to convert (eg. "2", "37")
+            unit (str): The units to convert to seconds (eg. "Days", "Year")
+
+        Returns:
+            int: The integer seconds of value * units, or 0 if either of value or unit is None
+        """
+        if None not in (value, unit):
+            return int(value) * self.get_unit_class(unit).length_in_seconds
+        return 0
+
+    def _parse_start(self, expression):
+        """
+        Convert a starting time expression to a datetime object. The expression can be one of:
+
+        - a date in numeric format (eg. "3.3206.12.17");
+        - a datetime instance defined in this module (eg. "yesterday", "tomorrow")
+        - a member of the timeline dictionary
+
+        If start is False, the parser's 'now' will be used.
+
+        Args:
+            expression (str): The expression to convert to a datetime object
+
+        Returns:
+            datetime: The datetime object
+
+        Raises:
+            ParseError: If the sub-expression cannot be parsed
+        """
+
+        # if there is no start, use 'now', ie, whatever the parser was seeded with for now
+        if not expression:
+            return self.now
+
+        # if start is a member of the timeline, use the date associated with that event
+        if expression in self.timeline:
+            return self.timeline[expression]
+
+        # the start might be a datetime instane defined by this module ('yesterday', 'today', etc)
+        try:
+            return [
+                i for i in inspect.getmembers(sys.modules[__name__]) if isinstance(i[1], datetime)
+            ][0][1]
+        except IndexError:
+            pass
+
+        # the start might be a numeric date string
+        try:
+            return datetime(*(map(int, expression.split('.'))))
+        except ValueError:
+            raise ParseError("Unable to parse date exprssion {}".format(expression))
+
+    def calculate_date(self, modifier, start='', value=None, unit=None):
+        """
+        Calculate a date by parsing a modifier sub-expression, possibly with a value and unit,
+        and applying it to the starting date.
+
+        Args:
+            modifier (str): A string specifying what kind of calculation to make; must be a member
+                of past_modifiers, future_modifiers, 'at', or 'on'.
+            start (str): The expression defining the date to apply the calculation to
+            value (str): A string of digits
+            unit (str): A string referencing time units defined by this module (eg. day, years, etc)
+
+        Returns:
+            datetime: The datetime object
+
+        Raises:
+            ParseError: If a date cannot be calculated from input
+        """
+
+        start = start.strip()
+        if not start:
+            start = self.now
+
+        offset = self._parse_value(value, unit)
+        start = self._parse_start(start)
+
+        if modifier.lower() in ('at', 'on'):
+            return start.as_seconds
+        elif modifier.lower() in self.past_modifiers:
+            return int(start) - offset
+        elif modifier.lower() in self.future_modifiers:
+            return int(start) + offset
+        else:
+            raise ParseError("Could not parse range modifier '{}'".format(modifier))
+
+    def get_unit_class(self, unit):
+        """
+        Returns the class referenced by the unit string (Era, Year, Season, Span, Day, Hour, etc).
+        Plurals will be stripped and capialization will be forced, so 'minutes' is equivalent to
+        'Minute'.
+
+        Args:
+            unit (str): The name of the unit of time to look up in this module
+
+        Returns:
+            DateObject: The subclass of DateObject
+        """
+        names = [unit.title(), unit.title().rstrip('s')]
+        for (name, obj) in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+            if name in names:
+                return obj
+        raise ParseError("Could not find a datetime object for {}".format(unit))
+
+
+# helpful shortcuts for importing and hints for the parser
+now = datetime(year=3206, season=8, day=12, era=3)
+today = now
+yesterday = today - Day.length_in_seconds

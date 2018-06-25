@@ -198,3 +198,12 @@ def test_datetime_comparisons():
     assert black_hour <= souls_hour
     assert souls_hour > black_hour
     assert souls_hour >= black_hour
+
+
+@pytest.mark.parametrize('expression, expected', [
+    ('1 day ago', {'value': '1', 'unit': 'day', 'modifier': 'ago', 'start': None}),
+])
+def test_parser_pattern(expression, expected):
+    print(telisaran.parser.pattern.pattern)
+    m = telisaran.parser.pattern.match(expression)
+    assert m.groupdict() == expected

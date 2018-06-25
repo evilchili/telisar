@@ -1,7 +1,7 @@
 """
 A Telisaran calendaring tool.
 """
-from telisaran import datetime, Day, Span, InvalidDayError
+import telisaran
 import fire
 
 
@@ -24,14 +24,14 @@ class Calendar:
 
         self.today = today
         if not self.today:
-            self.today = datetime()
+            self.today = telisaran.today
 
         self._end = end or self.today
 
         if start:
             self._start = start
         else:
-            self._start = datetime(
+            self._start = telisaran.datetime(
                 year=self._end.year.year,
                 season=self._end.season.season_of_year,
                 day=1
@@ -39,24 +39,24 @@ class Calendar:
 
     def season(self):
         print(self._start.season.name.upper().center(14))
-        print(" ".join([n[0:2] for n in Day.names]))
+        print(" ".join([n[0:2] for n in telisaran.Day.names]))
         chunks = []
         for day in self._start.season.days:
             chunks.append("{:02d}".format(day.day_of_season))
-            if day.day_of_span == Span.length_in_days:
+            if day.day_of_span == telisaran.Span.length_in_days:
                 print(" ".join(chunks))
                 chunks = []
 
     @property
     def yesterday(self):
         try:
-            return self.today - Day.length_in_seconds
-        except InvalidDayError:
+            return self.today - telisaran.Day.length_in_seconds
+        except telisaran.InvalidDayError:
             return "Mortals cannot go back before the beginning of time."
 
     @property
     def tomorrow(self):
-        return self.today + Day.length_in_seconds
+        return self.today + telisaran.Day.length_in_seconds
 
     def __repr__(self):
         return "The Telisaran Calendar"
