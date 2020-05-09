@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 A Telisaran calendaring tool.
 """
@@ -60,6 +62,7 @@ class Calendar:
 
     def __repr__(self):
         return "The Telisaran Calendar"
+
 
 if '__main__' == __name__:
     fire.Fire(Calendar())

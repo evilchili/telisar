@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
+
 """
 The Campaign clock for the Noobhammer Chronicles
 """
-from telisaran import datetime
+from telisaran import datetime, parser
 from calendar import Calendar
 import os
 import yaml
@@ -86,7 +88,7 @@ class Timeline:
         """
         self._del(description)
         self._write()
-        return self.list
+        return repr(self)
 
     def record(self, description, expression):
         """record
@@ -108,7 +110,7 @@ class Timeline:
         """
         self._add(description, datetime.from_expression(expression, timeline=self._events))
         self._write()
-        return self.list
+        return repr(self)
 
     @property
     def list(self):
@@ -133,6 +135,21 @@ class Timeline:
         """
         return yaml.dump(self._events)
 
+    @property
+    def as_markdown(self):
+        """as-markdown
+
+        Description:
+            Dump the timeline of events as a markdown-formatted list.
+        """
+        yield "#### {}".format(str(self))
+        for description in sorted(self._events, key=self._events.get):
+            yield("* *{} {}*  {}".format(
+                self._events.get(description).numeric_date,
+                self._events.get(description).date,
+                description
+            ))
+
     def __str__(self):
         return "The Noobhammer Chronicles Campaign Timeline"
 
@@ -148,6 +165,7 @@ class Campaign:
     def __init__(self):
         datafile = os.path.join(os.path.expanduser('~'), '.campaign_timeline.yaml')
         self.calendar = Calendar()
+        self.parse = parser().parse
         self.timeline = Timeline(datafile)
 
 

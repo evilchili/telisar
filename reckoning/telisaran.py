@@ -55,7 +55,8 @@ class MissingSeasonError(ReckoningError):
     pass
 
 
-def _suffix(n):
+def _suffix(day):
+    n = int(str(day)[-1])
     if n == 1:
         return 'st'
     elif n == 2:
@@ -227,7 +228,7 @@ class datetime(DateObject):
         else:
             season = self.season.name[0].upper()
 
-        return "{name}{date}{season}".format(
+        return "{name}{date:02d}{season}".format(
             name=self.day.name[0].upper(),
             date=self.day.day_of_season,
             season=season,
@@ -702,16 +703,16 @@ class parser:
     patterns = [
         # <value> <unit> <modifier> <start>
         re.compile(
-            r'(?P<value>\d+)\s*' +
-            r'(?P<unit>\w+)\s+' +
-            r'(?P<modifier>{}|{})'.format(
+            '(?P<value>\d+)\s*' +
+            '(?P<unit>\w+)\s+' +
+            '(?P<modifier>{}|{})'.format(
                 '|'.join(future_modifiers),
                 '|'.join(past_modifiers)) +
-            r'(?P<start>.*)',
+            '(?P<start>.*)',
         ),
 
         # at <start>
-        re.compile(r'(?P<modifier>on|at)\s+(?P<start>.*)'),
+        re.compile('(?P<modifier>on|at)\s+(?P<start>.*)'),
     ]
 
     def __init__(self, now=None, timeline={}):
@@ -746,8 +747,7 @@ class parser:
             m = pattern.match(expression)
             if m:
                 return datetime.from_seconds(self.calculate_date(**m.groupdict()))
-        raise ParseError("Could not parse expression '{}' using any pattern".format(
-            expression))
+        raise ParseError("Could not parse expression '{}' using any pattern".format(expression))
 
     def _parse_value(self, value, unit):
         """
@@ -792,7 +792,7 @@ class parser:
         if expression in self.timeline:
             return self.timeline[expression]
 
-        # the start might be a datetime instane defined by this module ('yesterday', 'today', etc)
+        # the start might be a datetime instance defined by this module ('yesterday', 'today', etc)
         try:
             return [
                 i for i in inspect.getmembers(sys.modules[__name__])
@@ -826,9 +826,12 @@ class parser:
             ParseError: If a date cannot be calculated from input
         """
 
+        if modifier == 'ago':
+            start = 'now'
+
         start = start.strip()
         if not start:
-            start = self.now
+            start = 'now'
 
         offset = self._parse_value(value, unit)
         start = self._parse_start(start)
@@ -862,6 +865,6 @@ class parser:
 
 
 # helpful shortcuts for importing and hints for the parser
-now = datetime(year=3206, season=8, day=12, era=3)
+now = datetime(year=3206, season=9, day=4, era=3)
 today = now
 yesterday = today - Day.length_in_seconds
