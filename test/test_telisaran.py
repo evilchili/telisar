@@ -1,5 +1,5 @@
 import pytest
-from reckoning import telisaran
+from telisar.reckoning import telisaran
 import random
 
 ONE_DAY_IN_SECONDS = 86400
@@ -201,9 +201,14 @@ def test_datetime_comparisons():
 
 
 @pytest.mark.parametrize('expression, expected', [
-    ('1 day ago', {'value': '1', 'unit': 'day', 'modifier': 'ago', 'start': None}),
+    ('1 day ago', {'value': '1', 'unit': 'day', 'modifier': 'ago'}),
 ])
 def test_parser_pattern(expression, expected):
-    print(telisaran.parser.pattern.pattern)
-    m = telisaran.parser.pattern.match(expression)
-    assert m.groupdict() == expected
+    for pattern in telisaran.parser.patterns:
+        m = pattern.match(expression)
+        if not m:
+            continue
+        print(f"{m.groupdict()} == {expected}")
+        assert m.groupdict() == expected
+        return True
+    pytest.fail(f"Expression was not matched by any pattern!")

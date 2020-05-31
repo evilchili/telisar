@@ -706,16 +706,14 @@ class parser:
     patterns = [
         # <value> <unit> <modifier> <start>
         re.compile(
-            '(?P<value>\d+)\s*' +
-            '(?P<unit>\w+)\s+' +
-            '(?P<modifier>{}|{})'.format(
-                '|'.join(future_modifiers),
-                '|'.join(past_modifiers)) +
-            '(?P<start>.*)',
+            r'(?P<value>\d+)\s+' +
+            r'(?P<unit>\S+)\s+' +
+            r'(?P<modifier>{})'.format('|'.join(future_modifiers + past_modifiers)),
+            #r'(?P<start>.*)',
         ),
 
         # at <start>
-        re.compile('(?P<modifier>on|at)\s+(?P<start>.*)'),
+        re.compile(r'(?P<modifier>on|at)\s+(?P<start>.*)'),
     ]
 
     def __init__(self, now=None, timeline={}):

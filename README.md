@@ -18,6 +18,9 @@ A discord bot
 ```bash
 pip3 install -r requirements.txt
 ```
+#### Tests
+
+python -mpytest
 
 ##### Usage
 
