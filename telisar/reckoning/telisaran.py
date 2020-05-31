@@ -104,7 +104,10 @@ class DateObject(ABC):  # pragma: no cover
         return self.as_seconds
 
     def __eq__(self, other):
-        return int(self) == int(other)
+        try:
+            return int(self) == int(other)
+        except TypeError:
+            return False
 
     def __gt__(self, other):
         return not self.__le__(other)

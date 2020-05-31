@@ -1,10 +1,7 @@
-#!/usr/bin/env python3
-
 """
 A Telisaran calendaring tool.
 """
-import telisaran
-import fire
+from . import telisaran
 
 
 class Calendar:
@@ -62,7 +59,3 @@ class Calendar:
 
     def __repr__(self):
         return "The Telisaran Calendar"
-
-
-if '__main__' == __name__:
-    fire.Fire(Calendar())

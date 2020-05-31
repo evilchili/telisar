@@ -5,9 +5,13 @@ homebrew campaign setting by @evilchili.
 
 ### What's in this package?
 
-#### reckoning
+#### telisar/reckoning
 
-A datetime package for the Telisaran calendar, including a CLI.
+A datetime package for the Telisaran calendar
+
+#### telisar/bot
+
+A discord bot
 
 ##### Installation
 
@@ -18,6 +22,6 @@ pip3 install -r requirements.txt
 ##### Usage
 
 ```bash
-python3 reckoning/calendar.py  # generic calendaring interface
-python3 reckoning/campaign.py  # the campaign clock
+calendar  # generic calendaring interface
+timeline  # the campaign clock
 ```

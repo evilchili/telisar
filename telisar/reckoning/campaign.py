@@ -1,13 +1,8 @@
-#!/usr/bin/env python3
-
 """
 The Campaign clock for the Noobhammer Chronicles
 """
-from telisaran import datetime, parser
-from calendar import Calendar
-import os
-import yaml
-import fire
+from telisar.reckoning import telisaran
+import json
 
 
 class Timeline:
@@ -17,38 +12,26 @@ class Timeline:
 
     def __init__(self, datafile=None):
         self._datafile = datafile
-        self._yaml_config()
         self._load()
 
     def _load(self):
         """
-        Load events from a YAML file.
+        Load events from a JSON file.
         """
         self._events = dict()
         if self._datafile:
             with open(self._datafile, 'r') as f:
-                self._events = yaml.load(f)
+                self._events = json.load(f)
+            for (event, timestamp) in self._events.items():
+                self._events[event] = telisaran.datetime.from_seconds(timestamp)
 
     def _write(self):
         """
-        Write timeline events to a YAML file.
+        Write timeline events to a JSON file.
         """
         if self._datafile:
             with open(self._datafile, 'w') as f:
-                f.write(self.as_yaml)
-
-    def _yaml_config(self):
-        """
-        Configure the PyYAML library to represent datetime objects as integer seconds
-        """
-        def yaml_representer(dumper, data):
-            return dumper.represent_scalar(u'telisaran.datetime', str(int(data)))
-
-        def yaml_constructor(loader, node):
-            return datetime.from_seconds(int(loader.construct_scalar(node)))
-
-        yaml.add_representer(datetime, yaml_representer)
-        yaml.add_constructor(u'telisaran.datetime', yaml_constructor)
+                f.write(self.as_json)
 
     def _add(self, description, date):
         """
@@ -108,7 +91,7 @@ class Timeline:
         EXPRESSION    When the event occurred.
 
         """
-        self._add(description, datetime.from_expression(expression, timeline=self._events))
+        self._add(description, telisaran.datetime.from_expression(expression, timeline=self._events))
         self._write()
         return repr(self)
 
@@ -127,13 +110,12 @@ class Timeline:
             ))
 
     @property
-    def as_yaml(self):
-        """as-yaml
+    def as_json(self):
 
-        Description:
-            Dump the timeline of events as YAML
-        """
-        return yaml.dump(self._events)
+        def serializer(obj):
+            if isinstance(obj, telisaran.datetime):
+                return int(obj)
+        return json.dumps(self._events, default=serializer)
 
     @property
     def as_markdown(self):
@@ -151,23 +133,4 @@ class Timeline:
             ))
 
     def __str__(self):
-        return "The Noobhammer Chronicles Campaign Timeline"
-
-    def __repr__(self):
-        return str(self) + "\n".join(list(self.list))
-
-
-class Campaign:
-    """
-    The timeline of major events in the campaign.
-    """
-
-    def __init__(self):
-        datafile = os.path.join(os.path.expanduser('~'), '.campaign_timeline.yaml')
-        self.calendar = Calendar()
-        self.parse = parser().parse
-        self.timeline = Timeline(datafile)
-
-
-if '__main__' == __name__:
-    fire.Fire(Campaign())
+        return "The Noobhammer Chronicles Campaign Timeline\n" + "\n".join(list(self.list))
