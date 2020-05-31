@@ -1,6 +1,6 @@
 import os
 import dotenv
-import telisar.bot as _bot
+import telisar.bot.hammer as _hammer
 import telisar.reckoning.calendar as _calendar
 import telisar.reckoning.campaign as _campaign
 
@@ -23,5 +23,6 @@ def bot():
     """
     Hammer the discord bot.
     """
-    client = _bot.hammer.Hammer()
+    print("Starting Discord bot...")
+    client = _hammer.Hammer()
     client.run()

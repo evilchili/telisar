@@ -1,10 +1,5 @@
-from bot.plugins.base import Plugin, message_parts
-
-import sys
-
-sys.path.append('../../')
-
-from reckoning import calendar
+from telisar.bot.plugins.base import Plugin, message_parts
+from telisar.reckoning import calendar
 
 
 class Date(Plugin):

@@ -1,5 +1,5 @@
-import pathlib
 import logging
+import os
 from importlib import import_module
 
 
@@ -16,7 +16,6 @@ class PluginManager(Plugin):
     help_string = 'This message.'
 
     def __init__(self):
-        self._plugin_path = pathlib.Path(pathlib.Path(__file__).parent.absolute())
         self._command_map = {}
         self.logger = logging.getLogger('PluginManager')
         self.logger.setLevel(logging.WARNING)
@@ -26,10 +25,8 @@ class PluginManager(Plugin):
         return self._command_map
 
     def load_plugins(self):
-        for fileobj in self._plugin_path.glob('*.py'):
-            if fileobj.name in ('base.py', '__init__.py'):
-                continue
-            import_module(f'bot.plugins.{fileobj.name[:-3]}')
+        for plugin_name in os.getenv('DISCORD_BOT_PLUGINS').split(','):
+            import_module(f'telisar.bot.plugins.{plugin_name}')
 
         self._command_map['help'] = self
         for plugin in Plugin.__subclasses__():

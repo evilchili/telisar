@@ -1,4 +1,4 @@
-from bot.plugins.base import Plugin
+from telisar.bot.plugins.base import Plugin
 
 
 class Echo(Plugin):
