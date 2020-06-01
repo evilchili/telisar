@@ -2,7 +2,12 @@
 The Campaign clock for the Noobhammer Chronicles
 """
 from telisar.reckoning import telisaran
+import collections
 import json
+
+
+event_properties = ['timestamp', 'redacted']
+Event = collections.namedtuple('Event', event_properties)
 
 
 class Timeline:
@@ -22,8 +27,10 @@ class Timeline:
         if self._datafile:
             with open(self._datafile, 'r') as f:
                 self._events = json.load(f)
-            for (event, timestamp) in self._events.items():
-                self._events[event] = telisaran.datetime.from_seconds(timestamp)
+
+            for (event, attrs) in self._events.items():
+                attrs[0] = telisaran.datetime.from_seconds(attrs[0])
+                self._events[event] = Event(**dict(zip(event_properties, attrs)))
 
     def _write(self):
         """
@@ -33,15 +40,16 @@ class Timeline:
             with open(self._datafile, 'w') as f:
                 f.write(self.as_json)
 
-    def _add(self, description, date):
+    def _add(self, description, date, redacted=False):
         """
         Add an event to the timeline.
 
         Args:
             description (str): The text of the event
             date (datetime): The datetime associated with the event
+            redacted (boolean): If True, do not include it in the public timeline
         """
-        self._events[description.title()] = date
+        self._events[description.title()] = Event(timestamp=date, redacted=redacted)
         return self._events.get(description)
 
     def _del(self, description):
@@ -73,7 +81,7 @@ class Timeline:
         self._write()
         return repr(self)
 
-    def record(self, description, expression):
+    def record(self, description, expression, redacted=False):
         """record
 
         Description:
@@ -89,9 +97,10 @@ class Timeline:
 
         DESCRIPTION   The description of the event
         EXPRESSION    When the event occurred.
+        REDACTED      If True, do not include this event in the public timeline.
 
         """
-        self._add(description, telisaran.datetime.from_expression(expression, timeline=self._events))
+        self._add(description, telisaran.datetime.from_expression(expression, timeline=self._events), redacted=redacted)
         self._write()
         return repr(self)
 
@@ -102,16 +111,12 @@ class Timeline:
         Description:
             List the events of the timeline.
         """
-        for description in sorted(self._events, key=self._events.get):
-            yield("{} {}  {}".format(
-                self._events.get(description).numeric_date,
-                self._events.get(description).date,
-                description
-            ))
+        markdown = ''.join(list(self.as_markdown)[1:])
+        plaintext = markdown.replace('*', '').replace('#', '').replace('|', '')
+        return plaintext
 
     @property
     def as_json(self):
-
         def serializer(obj):
             if isinstance(obj, telisaran.datetime):
                 return int(obj)
@@ -124,13 +129,11 @@ class Timeline:
         Description:
             Dump the timeline of events as a markdown-formatted list.
         """
-        yield "#### {}".format(str(self))
-        for description in sorted(self._events, key=self._events.get):
-            yield("* *{} {}*  {}".format(
-                self._events.get(description).numeric_date,
-                self._events.get(description).date,
-                description
-            ))
+        yield("|= Date |= Event")
+        for (description, event) in sorted(self._events.items(), key=lambda e: e[1].timestamp):
+            if event.redacted:
+                description = 'REDACTED'
+            yield(f'| *{event.timestamp.numeric_date} {event.timestamp.date}* | {description}\n')
 
     def __str__(self):
-        return "The Noobhammer Chronicles Campaign Timeline\n" + "\n".join(list(self.list))
+        return self.list
