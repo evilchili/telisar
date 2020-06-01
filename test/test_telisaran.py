@@ -201,7 +201,7 @@ def test_datetime_comparisons():
 
 
 @pytest.mark.parametrize('expression, expected', [
-    ('1 day ago', {'value': '1', 'unit': 'day', 'modifier': 'ago'}),
+    ('1 day ago', {'value': '1', 'unit': 'day', 'modifier': 'ago', 'start': ''}),
 ])
 def test_parser_pattern(expression, expected):
     for pattern in telisaran.parser.patterns:

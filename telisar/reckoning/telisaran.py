@@ -708,8 +708,8 @@ class parser:
         re.compile(
             r'(?P<value>\d+)\s+' +
             r'(?P<unit>\S+)\s+' +
-            r'(?P<modifier>{})'.format('|'.join(future_modifiers + past_modifiers)),
-            #r'(?P<start>.*)',
+            r'(?P<modifier>{})'.format('|'.join(future_modifiers + past_modifiers)) +
+            r'(?P<start>.*)',
         ),
 
         # at <start>
@@ -866,6 +866,6 @@ class parser:
 
 
 # helpful shortcuts for importing and hints for the parser
-now = datetime(year=3206, season=9, day=4, era=3)
+now = datetime(year=3207, season=1, day=1, era=3)
 today = now
 yesterday = today - Day.length_in_seconds
