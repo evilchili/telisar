@@ -1,5 +1,6 @@
 import os
 import logging
+import types
 
 import discord
 
@@ -67,4 +68,8 @@ class Hammer(discord.Client):
         # process the message using a plugin. If the plugin generates a response, send it.
         response = plugin.run(message)
         if response:
-            await message.channel.send(response)
+            if isinstance(response, types.GeneratorType):
+                for res in response:
+                    await message.channel.send(res)
+            else:
+                await message.channel.send(response)
