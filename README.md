@@ -27,4 +27,6 @@ python -mpytest
 ```bash
 calendar  # generic calendaring interface
 timeline  # the campaign clock
+hoard     # the bag of hoarding
+bot       # the discord bot
 ```
