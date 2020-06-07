@@ -1,12 +1,12 @@
 from telisar.bot.plugins import hoarding
+from telisar import bag_of_hoarding
 from conftest import msg_factory
-import os
 import pytest
 
 
 @pytest.fixture
 def env(monkeypatch):
-    monkeypatch.setenv(hoarding.BagOfHoarding.data_path_variable, 'data')
+    monkeypatch.setenv(bag_of_hoarding.DATA_PATH_VARIABLE, 'data')
 
 
 @pytest.fixture
@@ -25,4 +25,4 @@ def test_run(plugin, message, expected_lines):
 
 
 def test_HoardItem(env):
-    assert hoarding.HoardItem(os.environ.get(hoarding.BagOfHoarding.data_path_variable))
+    assert bag_of_hoarding.HoardItem((bag_of_hoarding.DATA_PATH_VARIABLE))

@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+from fire import Fire
+from telisar.cli import hoard
+
+Fire(hoard)
