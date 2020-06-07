@@ -25,7 +25,10 @@ class Roll(Plugin):
             else:
                 results = dice.roll(args[0])
         except (ValueError, dice.exceptions.DiceFatalException, dice.exceptions.DiceException):
-            return ":game_die: {message.author}: Invalid expression; try 'help {self.command}'.'"
+            results = None
+
+        if not results:
+            return ":game_die: {message.author}: Invalid expression."
 
         # dice.roll() returns either an Integer or a List, because dice.roll() DGAF
         try:
