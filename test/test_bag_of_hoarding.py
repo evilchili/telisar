@@ -3,13 +3,14 @@ from conftest import msg_factory
 import os
 import pytest
 
+
 @pytest.fixture
 def env(monkeypatch):
     monkeypatch.setenv(hoarding.BagOfHoarding.data_path_variable, 'data')
 
 
 @pytest.fixture
-def plugin(monkeypatch, env):
+def plugin(env):
     return hoarding.BagOfHoarding()
 
 

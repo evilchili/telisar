@@ -4,7 +4,7 @@ from collections import namedtuple
 from unittest.mock import MagicMock
 
 
-mock_message = namedtuple('MockMessage', 'content')
+mock_message = namedtuple('MockMessage', 'content, author')
 
 
 @pytest.fixture
@@ -40,4 +40,4 @@ def mock_discord_guilds():
 
 
 def msg_factory(content):
-    return mock_message(content=content)
+    return mock_message(content=content, author='test')
