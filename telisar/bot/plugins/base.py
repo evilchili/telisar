@@ -13,7 +13,7 @@ class Plugin():
 
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(logging.WARNING)
+        self.logger.setLevel(logging.DEBUG)
         if not self.check_config():
             self.logger.error(f"Config check failed; disabling {self.__class__.__name__} plugin.")
 

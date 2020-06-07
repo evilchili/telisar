@@ -18,6 +18,9 @@ class Hammer(discord.Client):
         super().__init__()
         logging.getLogger().setLevel(logging.DEBUG)
         logging.getLogger('websockets.protocol').setLevel(logging.ERROR)
+        logging.getLogger('discord.client').setLevel(logging.ERROR)
+        logging.getLogger('discord.gateway').setLevel(logging.ERROR)
+        logging.getLogger('discord.root').setLevel(logging.ERROR)
         self._initialize_env()
         self._initialize_plugins()
 
@@ -66,10 +69,14 @@ class Hammer(discord.Client):
             return
 
         # process the message using a plugin. If the plugin generates a response, send it.
-        response = plugin.run(message)
-        if response:
-            if isinstance(response, types.GeneratorType):
-                for res in response:
-                    await message.channel.send(res)
-            else:
-                await message.channel.send(response)
+        try:
+            response = plugin.run(message)
+            if response:
+                if isinstance(response, types.GeneratorType):
+                    for res in response:
+                        await message.channel.send(res)
+                else:
+                    await message.channel.send(response)
+        except Exception:
+            logging.error("An error occurred executing the plugin.", exc_info=True)
+            await message.channel.send("I AM ERROR.")
