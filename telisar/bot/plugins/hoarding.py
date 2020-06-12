@@ -12,7 +12,7 @@ class BagOfHoarding(Plugin):
     hoard N......Pull N random items from the Bag of Hoarding.
     """
     command = 'hoard'
-    help_string = "Pull a random item from Whisper's Bag of Hoarding"
+    help_text = "Pull a random item from Whisper's Bag of Hoarding"
 
     def __init__(self):
         self._data_path = None

@@ -5,7 +5,7 @@ from telisar.reckoning import calendar
 class Date(Plugin):
 
     command = 'date'
-    help_string = "Telisaran calendar interface."
+    help_text = "Telisaran calendar interface."
 
     def __init__(self):
         self.calendar = calendar.Calendar()

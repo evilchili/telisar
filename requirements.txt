@@ -1,4 +1,6 @@
+dice
+discord
 fire
 pytest
 pytest-cov
-dice
+python-dotenv

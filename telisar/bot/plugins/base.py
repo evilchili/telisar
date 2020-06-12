@@ -37,7 +37,7 @@ class PluginManager(Plugin):
     This class is responsible for routing messages to plugins.
     """
     command = 'help'
-    help_string = 'This message.'
+    help_text = 'This message.'
 
     def __init__(self):
         self._command_map = {}
@@ -86,7 +86,7 @@ class Help(Plugin):
 
     """
     command = 'help'
-    help_string = "This message."
+    help_text = "This message."
 
     def __init__(self, command_map):
         super().__init__()
@@ -102,7 +102,7 @@ class Help(Plugin):
     def command_list(self):
         lines = []
         for plugin in self._command_map.values():
-            lines.append(f'{plugin.command}: {plugin.help_string}')
+            lines.append(f'{plugin.command}: {plugin.help_text}')
         return '\n'.join(lines)
 
     def run(self, message):

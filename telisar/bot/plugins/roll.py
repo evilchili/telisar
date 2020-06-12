@@ -12,7 +12,7 @@ class Roll(Plugin):
     The full 'roll' syntax is anything supported by python-dice; see https://github.com/borntyping/python-dice .
     """
     command = 'roll'
-    help_message = "A dice roller."
+    help_text = "A dice roller."
 
     def run(self, message):
         (cmd, args) = message_parts(message)
