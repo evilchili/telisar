@@ -4,6 +4,7 @@ import telisar.bot.hammer as _hammer
 import telisar.reckoning.calendar as _calendar
 import telisar.reckoning.campaign as _campaign
 import telisar.bag_of_hoarding as _hoard
+import telisar.npc as _npc
 
 dotenv.load_dotenv()
 
@@ -29,6 +30,17 @@ def hoard(count=1):
     """
     for item in [_hoard.HoardItem(os.environ.get(_hoard.DATA_PATH_VARIABLE)) for i in range(int(count))]:
         print(str(item))
+
+
+def npc(people='elf', count=1):
+    try:
+        module = getattr(_npc, people)
+    except AttributeError:
+        print(f"Don't know how to generate {people} NPCs.")
+        return
+
+    for _ in range(count):
+        print(module.NPC())
 
 
 def bot():
