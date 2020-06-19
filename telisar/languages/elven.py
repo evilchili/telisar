@@ -9,7 +9,7 @@ class Elven(BaseLanguage):
     and naming conventions following Twirrim's conventions in-game.
     """
 
-    _vowels = ['a', 'e', 'i', 'o', 'u'
+    _vowels = ['a', 'e', 'i', 'o', 'u']
     _consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'l', 'k', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'y', 'z']
     _affixes = ['am', 'an', 'al']
 
