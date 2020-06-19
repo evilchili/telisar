@@ -4,7 +4,8 @@ import telisar.bot.hammer as _hammer
 import telisar.reckoning.calendar as _calendar
 import telisar.reckoning.campaign as _campaign
 import telisar.bag_of_hoarding as _hoard
-import telisar.npc as _npc
+
+from importlib import import_module as _import_module
 
 dotenv.load_dotenv()
 
@@ -34,7 +35,7 @@ def hoard(count=1):
 
 def npc(people='elf', count=1):
     try:
-        module = getattr(_npc, people)
+        module = _import_module(f'telisar.npc.{people}')
     except AttributeError:
         print(f"Don't know how to generate {people} NPCs.")
         return
