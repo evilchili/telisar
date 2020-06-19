@@ -42,7 +42,7 @@ class Elven(BaseLanguage):
             list: a list of names consisting of the given name, the affix, and the surname.
         """
         templates = [
-            (('c', 'V', 'c'), [0, 1, 2]),
+            (('c', 'V', 'c', 'v'), [1, 1]),
             ('A', [1])
         ]
         names = []
@@ -55,9 +55,12 @@ class Elven(BaseLanguage):
         """
         Place names always have two or three syllables.
         """
-        return self.word(('c', 'V', 'c'), [0, 2, 2])
+        return self.word(('c', 'V', 'v', 'c'), [1, 2])
 
     def _validate_first_syllable(self, word):
+
+        if len(word) < 3:
+            return False
 
         # anything starting with a vowel is fine
         if self.is_valid_vowel(word[0]):
@@ -71,7 +74,7 @@ class Elven(BaseLanguage):
         return False
 
     def _validate_last_syllable(self, word):
-        if word[-1] not in ['t', 's', 'n', 'l', 'r', 'd']:
+        if word[-1] not in ['t', 's', 'n', 'l', 'r', 'd', 'a']:
             return False
         return True
 
