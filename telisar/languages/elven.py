@@ -4,9 +4,13 @@ from telisar.languages.base import BaseLanguage
 
 
 class Elven(BaseLanguage):
+    """
+    Phonetics for the Elven language in Telisar. Loosely based on Tolkein's Quenya language, but with character tweaks
+    and naming conventions following Twirrim's conventions in-game.
+    """
 
-    _vowels = ['a', 'e', 'i', 'o', 'u', 'á', 'é', 'i', 'o', 'u']
-    _consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'l', 'k', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'y']
+    _vowels = ['a', 'e', 'i', 'o', 'u'
+    _consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'l', 'k', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'y', 'z']
     _affixes = ['am', 'an', 'al']
 
     _valid_middle_clusters = re.compile(
@@ -15,7 +19,9 @@ class Elven(BaseLanguage):
     )
 
     def is_valid_word(self, word):
-
+        """
+        Override the default word validator to invoke our custom validation.
+        """
         # elven affixes are words
         if self.is_valid_affix(word):
             return True
@@ -27,6 +33,14 @@ class Elven(BaseLanguage):
         )
 
     def person_name(self):
+        """
+        Use custom syllable templtates for names. The elves of Telisar typically two names, a given name and a surname.
+        The surname is always preceded by an affix (am, an, or al); in the First Age surnames were simply the location
+        of a person's birth (during adolescence), or wherever they found renown (in adulthood).
+
+        Returns:
+            list: a list of names consisting of the given name, the affix, and the surname.
+        """
         templates = [
             (('c', 'V', 'c'), [0, 1, 2]),
             ('A', [1])
@@ -38,6 +52,9 @@ class Elven(BaseLanguage):
         return names
 
     def place_name(self):
+        """
+        Place names always have two or three syllables.
+        """
         return self.word(('c', 'V', 'c'), [0, 2, 2])
 
     def _validate_first_syllable(self, word):
@@ -47,21 +64,15 @@ class Elven(BaseLanguage):
             return True
 
         # anything starting with these sequences is fine
-        valid = re.compile(r'[ky|ty|ly|ny|nw]')
+        valid = re.compile(r'[ghlmnrst][aeiouy]')
         if valid.match(word[:2]):
             return True
-
-        # anything starting with one of these consonants followed by a vowel is fine
-        if word[0] in 'cfhlmnpqrstvwy':
-            if self.is_valid_vowel(word[1]):
-                return True
 
         return False
 
     def _validate_last_syllable(self, word):
-        if word[-1] not in ['t', 's', 'n', 'l', 'r']:
-            if not self.is_valid_vowel(word[-1]):
-                return False
+        if word[-1] not in ['t', 's', 'n', 'l', 'r', 'd']:
+            return False
         return True
 
     def _validate_middle_clusters(self, word):
