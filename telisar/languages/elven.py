@@ -1,6 +1,6 @@
 import re
 
-from telisar.languages.base import BaseLanguage
+from telisar.languages.base import BaseLanguage, LanguageException
 
 
 class Elven(BaseLanguage):
@@ -22,15 +22,24 @@ class Elven(BaseLanguage):
         """
         Override the default word validator to invoke our custom validation.
         """
-        # elven affixes are words
-        if self.is_valid_affix(word):
-            return True
+        word = word.lower()
 
-        return (
-            self._validate_first_syllable(word) and
-            self._validate_middle_clusters(word) and
-            self._validate_last_syllable(word)
-        )
+        # elven affixes are words
+        try:
+            if self.is_valid_affix(word):
+                return True
+        except LanguageException:
+            pass
+
+        try:
+            return (
+                self._validate_first_syllable(word) and
+                self._validate_middle_clusters(word) and
+                self._validate_last_syllable(word)
+            )
+        except LanguageException:
+            self._logger.debug(f"Invalid word: {word}", exc_info=True)
+        return False
 
     def person_name(self):
         """
@@ -63,11 +72,14 @@ class Elven(BaseLanguage):
             return False
 
         # anything starting with a vowel is fine
-        if self.is_valid_vowel(word[0]):
-            return True
+        try:
+            if self.is_valid_vowel(word[0]):
+                return True
+        except LanguageException:
+            pass
 
         # anything starting with these sequences is fine
-        valid = re.compile(r'[ghlmnrst][aeiouy]')
+        valid = re.compile(r'[glmnrstv][aeiouy]')
         if valid.match(word[:2]):
             return True
 
@@ -86,6 +98,7 @@ class Elven(BaseLanguage):
                 continue
             if last_consonant:
                 if not self._valid_middle_clusters.match(last_consonant + char):
+                    print(f"word {word} contains invalid sequence: {last_consonant}{char}")
                     return False
             last_consonant = char
         return True
