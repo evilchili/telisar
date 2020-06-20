@@ -1,7 +1,14 @@
 import random
+import logging
 from collections import namedtuple
 
 grapheme = namedtuple('Grapheme', ['char', 'weight'])
+
+
+class LanguageException(Exception):
+    """
+    Thrown when language validators fail.
+    """
 
 
 class BaseLanguage:
@@ -38,6 +45,8 @@ class BaseLanguage:
     syllable_weights = [1, 1]
 
     def __init__(self, vowels=None, consonants=None, affixes=None):
+        self._logger = logging.getLogger('language')
+        self._logger.setLevel(logging.ERROR)
         self._load_graphemes(vowels, consonants, affixes)
 
     @property
@@ -53,13 +62,19 @@ class BaseLanguage:
         return self._affixes
 
     def is_valid_affix(self, sequence):
-        return sequence.lower() in [g.char for g in self.affixes]
+        if sequence.lower() not in [g.char for g in self.affixes]:
+            raise LanguageException(f"Invalid affix: {sequence.lower()}")
+        return True
 
     def is_valid_vowel(self, sequence):
-        return sequence.lower() in [g.char for g in self.vowels]
+        if sequence.lower() not in [g.char for g in self.vowels]:
+            raise LanguageException(f"Invalid vowel: {sequence.lower()}")
+        return True
 
     def is_valid_consonant(self, sequence):
-        return sequence.lower() in [g.char for g in self.consonants]
+        if sequence.lower() not in [g.char for g in self.consonants]:
+            raise LanguageException(f"Invalid consonant: {sequence.lower()}")
+        return True
 
     def is_valid_grapheme(self, sequence):
         return (
@@ -69,7 +84,7 @@ class BaseLanguage:
         )
 
     def is_valid_word(self, word):
-        return True
+        raise NotImplementedError("You must define is_valid_word() on your subclass.")
 
     def person_name(self):
         return self.word()
