@@ -14,7 +14,7 @@ class BaseNPC:
     @property
     def names(self):
         if not self._names:
-            self._names = self.language.person_name()
+            self._names = self.language.word()
         return self._names
 
     @property

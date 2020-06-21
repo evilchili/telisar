@@ -7,18 +7,27 @@ from telisar.languages.base import BaseLanguage
 @pytest.fixture
 def test_lang():
     class _(BaseLanguage):
-        _vowels = 'ae'
-        _consonants = 'bcd'
-        _affixes = 'o'
+        vowels = 'ae'
+        consonants = 'bcd'
+        affixes = 'o'
+
+        first_vowels = vowels
+        first_consonants = consonants
+        first_affixes = affixes
+
+        last_vowels = vowels
+        last_consonants = consonants
+        last_affixes = affixes
 
         syllable_template = ('C', 'V')
         syllable_weights = [1, 1]
 
+        minimum_length = 2
     return _
 
 
 def possible_syllables(klass):
-    return [x[0]+x[1] for x in itertools.product(klass._consonants, klass._vowels)]
+    return [x[0]+x[1] for x in itertools.product(klass.consonants, klass.vowels)]
 
 
 def possible_words(klass):
@@ -29,24 +38,9 @@ def possible_words(klass):
     )
 
 
-def test_BaseLanguage_init(test_lang):
+def test_BaseLanguage_is_valid(test_lang):
     lang = test_lang()
-    assert lang.vowels
-    assert lang.consonants
-    assert lang.affixes
-
-    assert lang.is_valid_vowel('a')
-    assert lang.is_valid_vowel('e')
-    assert lang.is_valid_consonant('b')
-    assert lang.is_valid_consonant('c')
-    assert lang.is_valid_consonant('d')
-    assert lang.is_valid_affix('o')
-
-    assert lang.is_valid_grapheme('x') is False
-
-
-def test_word_with_defaults(test_lang):
-    lang = test_lang()
-    possible = possible_words(test_lang)
-    for _ in range(100):
-        assert lang.word() in possible
+    for word in possible_words(test_lang):
+        assert lang.is_valid(word)
+        assert lang.is_valid(f"x{word}") is False
+        assert lang.is_valid(f"{word}x") is False

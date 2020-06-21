@@ -11,6 +11,76 @@ class LanguageException(Exception):
     """
 
 
+class SyllableFactory:
+
+    def __init__(self, template, weights, vowels, consonants, affixes):
+        self.template = template
+        self.weights = weights
+        self.grapheme = {
+            'chars': {
+                'c': [x.char for x in consonants],
+                'v': [x.char for x in vowels],
+                'a': [x.char for x in affixes]
+            },
+            'weights': {
+                'c': [x.weight for x in consonants],
+                'v': [x.weight for x in vowels],
+                'a': [x.weight for x in affixes]
+            }
+        }
+
+    def graphemes(self):
+        for chars in [v for v in self.grapheme['chars'].values()]:
+            for char in chars:
+                yield char
+
+    def is_valid(self, chars):
+        return (
+            chars in self.grapheme['chars']['c'] or
+            chars in self.grapheme['chars']['v'] or
+            chars in self.grapheme['chars']['a']
+        )
+
+    def get(self):
+        """
+        Generate a single syllable
+        """
+        syllable = ''
+        for t in self.template:
+            if t.islower() and random.random() < 0.5:
+                continue
+            t = t.lower()
+            syllable = syllable + random.choices(self.grapheme['chars'][t], self.grapheme['weights'][t])[0]
+        return syllable
+
+    def __str__(self):
+        return self.get()
+
+
+class WordFactory:
+
+    def __init__(self, language):
+        self.language = language
+
+    def random_syllable_count(self):
+        return 1 + random.choices(range(len(self.language.syllable.weights)), self.language.syllable.weights)[0]
+
+    def get(self):
+
+        total_syllables = self.random_syllable_count()
+        seq = []
+        while not self.language.validate_sequence(seq, total_syllables):
+            seq = [self.language.first_syllable.get()]
+            while len(seq) < total_syllables - 2:
+                seq.append(self.language.syllable.get())
+            if len(seq) < total_syllables:
+                seq.append(self.language.last_syllable.get())
+        return ''.join(seq)
+
+    def __str__(self):
+        return self.get()
+
+
 class BaseLanguage:
     """
     Words are created by combining syllables selected from random phonemes according to templates, each containing one
@@ -37,137 +107,92 @@ class BaseLanguage:
         [0, 1]    - Names must have exactly two syllables
     """
 
-    _vowels = []
-    _consonants = []
-    _affixes = []
+    vowels = []
+    consonants = []
+    affixes = []
+
+    first_vowels = vowels
+    first_consonants = consonants
+    first_affixes = affixes
+
+    last_vowels = vowels
+    last_consonants = consonants
+    last_affixes = affixes
 
     syllable_template = ('C', 'V')
     syllable_weights = [1, 1]
 
-    def __init__(self, vowels=None, consonants=None, affixes=None):
-        self._logger = logging.getLogger('language')
-        self._logger.setLevel(logging.ERROR)
-        self._load_graphemes(vowels, consonants, affixes)
+    minimum_length = 3
 
-    @property
-    def vowels(self):
-        return self._vowels
+    def __init__(self):
+        self._logger = logging.getLogger()
+        self._logger.setLevel(logging.DEBUG)
 
-    @property
-    def consonants(self):
-        return self._consonants
-
-    @property
-    def affixes(self):
-        return self._affixes
-
-    def is_valid_affix(self, sequence):
-        if sequence.lower() not in [g.char for g in self.affixes]:
-            raise LanguageException(f"Invalid affix: {sequence.lower()}")
-        return True
-
-    def is_valid_vowel(self, sequence):
-        if sequence.lower() not in [g.char for g in self.vowels]:
-            raise LanguageException(f"Invalid vowel: {sequence.lower()}")
-        return True
-
-    def is_valid_consonant(self, sequence):
-        if sequence.lower() not in [g.char for g in self.consonants]:
-            raise LanguageException(f"Invalid consonant: {sequence.lower()}")
-        return True
-
-    def is_valid_grapheme(self, sequence):
-        return (
-            self.is_valid_affix(sequence) or
-            self.is_valid_vowel(sequence) or
-            self.is_valid_consonant(sequence)
+        self.syllable = SyllableFactory(
+            template=self.syllable_template,
+            weights=self.syllable_weights,
+            vowels=[grapheme(char=c, weight=1) for c in self.__class__.vowels],
+            consonants=[grapheme(char=c, weight=1) for c in self.__class__.consonants],
+            affixes=[grapheme(char=c, weight=1) for c in self.__class__.affixes]
         )
 
-    def is_valid_word(self, word):
-        raise NotImplementedError("You must define is_valid_word() on your subclass.")
+        self.first_syllable = SyllableFactory(
+            template=self.syllable_template,
+            weights=self.syllable_weights,
+            vowels=[grapheme(char=c, weight=1) for c in self.__class__.first_vowels],
+            consonants=[grapheme(char=c, weight=1) for c in self.__class__.first_consonants],
+            affixes=[grapheme(char=c, weight=1) for c in self.__class__.first_affixes]
+        )
 
-    def person_name(self):
+        self.last_syllable = SyllableFactory(
+            template=self.syllable_template,
+            weights=self.syllable_weights,
+            vowels=[grapheme(char=c, weight=1) for c in self.__class__.last_vowels],
+            consonants=[grapheme(char=c, weight=1) for c in self.__class__.last_consonants],
+            affixes=[grapheme(char=c, weight=1) for c in self.__class__.last_affixes]
+        )
+
+    def _valid_syllable(self, syllable, text, reverse=False):
+        length = 0
+        for seq in syllable.graphemes():
+            length = len(seq)
+            substr = text[-1 * length:] if reverse else text[0:length]
+            if substr == seq:
+                return length
+        return False
+
+    def is_valid(self, text):
+
+        text = text.lower().replace(' ', '')
+
+        if len(text) < self.minimum_length:
+            return False
+
+        first_offset = self._valid_syllable(self.first_syllable, text)
+        if first_offset is False:
+            return False
+
+        last_offset = self._valid_syllable(self.last_syllable, text, reverse=True)
+        if last_offset is False:
+            return False
+        last_offset = len(text) - last_offset
+
+        while first_offset < last_offset:
+            middle = text[first_offset:last_offset]
+            new_offset = self._valid_syllable(self.syllable, middle)
+            if new_offset is False:
+                return False
+            first_offset = first_offset + new_offset
+        return True
+
+    def validate_sequence(self, sequence, total_syllables):
+        return len(''.join(sequence)) < self.minimum_length
+
+    def word(self):
+        return WordFactory(language=self)
+
+    def place(self):
         return self.word()
 
-    def place_name(self):
+    def person(self):
         return self.word()
-
-    def word(self, syllable_template=None, syllable_weights=None, vowels=None, consonants=None, affixes=None):
-
-        # handle overrides
-        if not syllable_template:
-            syllable_template = self.syllable_template
-        if not syllable_weights:
-            syllable_weights = self.syllable_weights
-        if not vowels:
-            vowels = self.vowels
-        if not consonants:
-            consonants = self.consonants
-        if not affixes:
-            affixes = self.affixes
-
-        # select a random number of syllables for this word
-        syllable_count = 1 + random.choices(range(len(syllable_weights)), syllable_weights)[0]
-
-        # generate a valid word by combining syllables
-        word = ''
-        while not (word and self.is_valid_word(word)):
-            word = ''.join([
-                self._syllable(syllable_template, syllable_weights, vowels, consonants, affixes)
-                for _ in range(syllable_count)
-            ])
-        return word
-
-    def _syllable(self, template, weights, vowels, consonants, affixes):
-        """
-        Generate a single syllable
-        """
-        syllable = ''
-        for part in template:
-            syllable = syllable + self._random_grapheme(part, vowels, consonants, affixes)
-        return syllable
-
-    def _load_graphemes(self, vowels, consonants, affixes):
-        if vowels:
-            self._vowels = vowels
-        else:
-            self._vowels = [grapheme(char=c, weight=1) for c in self.__class__._vowels]
-
-        if consonants:
-            self._consonants = consonants
-        else:
-            self._consonants = [grapheme(char=c, weight=1) for c in self.__class__._consonants]
-
-        if affixes:
-            self._affixes = affixes
-        else:
-            self._affixes = [grapheme(char=c, weight=1) for c in self.__class__._affixes]
-
-    def _random_grapheme(self, phoneme_type, vowels, consonants, affixes):
-        """
-        Randomly choose a grapheme of the given type, weighted by length; graphemes of 2 characters are half as likely
-        to be selected as graphemes of 1 character, and so on.
-
-        Args:
-            phoneme_type (str): The type of grapheme to select; 'c' or 'C' for a consonant, 'v' or 'V' for a vowel. The
-                special values 'a' and 'A' can be used to select an affix, if available. If the phoneme_type is in
-                lower-case, there is a 50% chance an empty string will ber returned instead of a grapheme.
-
-        Returns:
-            string: a grapheme of the specified type.
-        """
-        if phoneme_type.islower() and random.random() < 0.5:
-            return ''
-        pt = phoneme_type.lower()
-        if pt == 'c':
-            return self._pick_one_grapheme(consonants)
-        elif pt == 'v':
-            return self._pick_one_grapheme(vowels)
-        elif pt == 'a':
-            return self._pick_one_grapheme(affixes)
-        raise Exception(f"Invalid phoneme type: {phoneme_type}")
-
-    def _pick_one_grapheme(self, graphemes):
-        # this is brute force and stupid -- by default all graphemes are weighted equally,
-        # which is totally not how actual languages work. But I'm invoking Rule 0 because Rule 0.
-        return random.choices([g.char for g in graphemes], [g.weight for g in graphemes])[0]
