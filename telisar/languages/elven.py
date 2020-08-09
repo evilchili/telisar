@@ -42,6 +42,10 @@ class ElvenPlaceName(Elven):
     syllable_template = ('c', 'V', 'v', 'c')
     syllable_weights = [1, 2]
 
+    first_consonants = Elven.first_consonants + ['q']
+
+    affixes = ['el']
+
     def full_name(self):
         return 'el '.join(self.names)
 

@@ -163,30 +163,38 @@ class BaseLanguage:
 
     def is_valid(self, text):
 
-        text = text.lower().replace(' ', '')
+        affixes = set(self.affixes + self.first_affixes + self.last_affixes)
+        for part in text.lower().split(' '):
 
-        if len(text) < self.minimum_length:
-            return False
+            if part in affixes:
+                continue
 
-        first_offset = self._valid_syllable(self.first_syllable, text)
-        if first_offset is False:
-            return False
-
-        last_offset = self._valid_syllable(self.last_syllable, text, reverse=True)
-        if last_offset is False:
-            return False
-        last_offset = len(text) - last_offset
-
-        while first_offset < last_offset:
-            middle = text[first_offset:last_offset]
-            new_offset = self._valid_syllable(self.syllable, middle)
-            if new_offset is False:
+            if len(part) < self.minimum_length:
+                self._logger.debug(f"'{part}' too short; must be {self.minimum_length} characters.")
                 return False
-            first_offset = first_offset + new_offset
+
+            first_offset = self._valid_syllable(self.first_syllable, part)
+            if first_offset is False:
+                self._logger.debug(f"'{part}' is not a valid syllable.")
+                return False
+
+            last_offset = self._valid_syllable(self.last_syllable, part, reverse=True)
+            if last_offset is False:
+                self._logger.debug(f"'{part}' is not a valid syllable.")
+                return False
+            last_offset = len(part) - last_offset
+
+            while first_offset < last_offset:
+                middle = part[first_offset:last_offset]
+                new_offset = self._valid_syllable(self.syllable, middle)
+                if new_offset is False:
+                    self._logger.debug(f"'{middle}' is not a valid middle sequence.")
+                    return False
+                first_offset = first_offset + new_offset
         return True
 
     def validate_sequence(self, sequence, total_syllables):
-        return len(''.join(sequence)) < self.minimum_length
+        return len(''.join(sequence)) > self.minimum_length
 
     def word(self):
         return WordFactory(language=self)
@@ -195,4 +203,4 @@ class BaseLanguage:
         return self.word()
 
     def person(self):
-        return self.word()
+        return (self.word(), self.word())
