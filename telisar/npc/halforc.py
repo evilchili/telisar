@@ -8,5 +8,4 @@ class NPC(BaseNPC):
 
     @property
     def full_name(self):
-        names = [str(x) for x in self.language.person()]
-        return ' '.join(names)
+        return ' '.join([str(x).capitalize() for x in self.language.person()])
