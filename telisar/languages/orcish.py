@@ -6,7 +6,7 @@ from telisar.languages.base import BaseLanguage
 class Orcish(BaseLanguage):
 
     vowels = ['a', 'e', 'i', 'o', 'u']
-    consonants = ['b', 'c', 'ch', 'cht', 'd', 'f', 'h', 'k', 'm', 'n', 'p', 'r', 's', 'sh', 'sht', 't', 'x', 'z']
+    consonants = ['b', 'c', 'ch', 'd', 'f', 'h', 'k', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'z']
     affixes = []
 
     first_vowels = vowels
@@ -22,18 +22,18 @@ class Orcish(BaseLanguage):
 
     _middle_clusters = re.compile(
         r'\S?[' +
-        r'b[dkprs]|' +
-        r'c[hkprst]|' +
-        r'd[bks]|' +
-        r'f[ckrt]|' +
-        r'k[rsz]|' +
-        r'm[s]|' +
-        r'n[stz]|' +
-        r'p[st]|' +
-        r'r[ktz]|' +
-        r's[chkrt]|' +
-        r't[chrsz]' +
-        r']+\S?'
+        r'bd|bk|br|bs|' +
+        r'ch|ck|cp|cr|cs|ct|' +
+        r'db|dk|ds|' +
+        r'fr|ft|' +
+        r'kr|ks|kz|' +
+        r'ms|' +
+        r'ns|nt|nz|' +
+        r'ps|pt|' +
+        r'rk|rt|rz|' +
+        r'sc|sh|sk|sr|st|' +
+        r'tc|th|tr|ts|tz' +
+        r']\S?'
     )
 
     def validate_sequence(self, sequence, total_syllables):
@@ -52,5 +52,6 @@ class OrcishPerson(Orcish):
 
 
 class HalfOrcPerson(Orcish):
-    syllable_template = ('C', 'V', 'c', 'c')
-    first_consonants = ['b', 'c', 'd', 'k', 'p', 't', 'x', 'z']
+    syllable_template = ('C', 'V', 'c')
+    first_consonants = ['b', 'c', 'd', 'k', 'p', 't', 'z']
+    last_consonants = Orcish.consonants + ['sht', 'cht', 'zt', 'zch']

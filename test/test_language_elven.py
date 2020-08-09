@@ -47,3 +47,12 @@ def test_existing_names(person, name):
 ])
 def test_existing_place_names(place, name):
     assert place.is_valid(name)
+
+
+@pytest.mark.parametrize('name', [
+    'Danta Kosht',
+    'Bartok Brescht'
+])
+def test_invalid_names(person, name):
+    assert not person.is_valid(name)
+
