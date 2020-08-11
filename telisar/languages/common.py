@@ -41,7 +41,7 @@ class Common(BaseLanguage):
     last_affixes = affixes
 
     syllable_template = ('C', 'V')
-    syllable_weights = [1, 4, 3, 1]
+    syllable_weights = [2, 4, 3, 1]
 
     minimum_length = 2
 
