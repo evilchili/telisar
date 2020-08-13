@@ -152,6 +152,7 @@ class BaseLanguage:
             affixes=[grapheme(char=c, weight=1) for c in self.__class__.last_affixes]
         )
 
+
     def _valid_syllable(self, syllable, text, reverse=False):
         length = 0
         for seq in syllable.graphemes():

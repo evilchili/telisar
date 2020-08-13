@@ -1,11 +1,11 @@
 import logging
 import pytest
-from telisar.languages.common import Common
+from telisar.languages.common import Common, CommonPerson
 
 
 @pytest.fixture
 def common():
-    e = Common()
+    e = CommonPerson()
     e._logger.setLevel(logging.DEBUG)
     return e
 
@@ -13,7 +13,7 @@ def common():
 @pytest.mark.parametrize('name', [
     'Banu',
     'Tak',
-    'William',
+    'William Johnson MacDougal',
     'Kris',
     'Randal',
     'Belia',

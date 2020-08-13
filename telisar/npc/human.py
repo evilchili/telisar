@@ -4,7 +4,7 @@ from telisar.npc.base import BaseNPC
 
 class NPC(BaseNPC):
 
-    language = common.Common()
+    language = common.CommonPerson()
 
     @property
     def full_name(self):
