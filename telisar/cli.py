@@ -30,7 +30,7 @@ def hoard(count=1):
     """
     Retrieve 1 or more random items from Whisper's Bag of Hoarding.
     """
-    for item in [_hoard.HoardItem(os.environ.get(_hoard.DATA_PATH_VARIABLE)) for i in range(int(count))]:
+    for item in [_hoard.HoardItem() for i in range(int(count))]:
         print(str(item))
 
 

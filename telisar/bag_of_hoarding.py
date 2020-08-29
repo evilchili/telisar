@@ -3,16 +3,16 @@ import os
 from functools import partial
 
 
-DATA_PATH_VARIABLE = 'HOARDING_DATA_PATH'
+DATA = os.path.join(os.path.dirname(__file__), 'data')
 
 
 class HoardItem:
     """
     A random item in Whisper's Bag of Hoarding.
     """
-    def __init__(self, path):
-        self._nouns = os.path.join(path, 'nouns')
-        self._adjectives = os.path.join(path, 'adjectives')
+    def __init__(self):
+        self._nouns = os.path.join(DATA, 'nouns')
+        self._adjectives = os.path.join(DATA, 'adjectives')
         self._population_cache = {}
 
     @property
