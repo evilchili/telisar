@@ -15,15 +15,8 @@ setup(
     packages=setuptools.find_packages(),
     package_dir={'telisar': 'telisar'},
     include_package_data=True,
+    package_data={'telisar': ['data/*']},
     zip_safe=False,
-    data_files=[
-        ('telisar', [
-            'data/LICENSE_THINGS_database.txt',
-            'data/LICENSE_WordNet.txt',
-            'data/adjectives',
-            'data/nouns'
-        ]),
-    ],
     entry_points={
         'console_scripts': [
             'calendar=telisar.cli:calendar'
