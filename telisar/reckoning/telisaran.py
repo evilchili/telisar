@@ -74,7 +74,7 @@ class DateObject(ABC):  # pragma: no cover
     from_seconds() method, it will be called with the result of the calculation, otherwise the
     integer seconds will be returned.
 
-    Subclasseres must define the number, as_seconds and length_in_seconds attributes.
+    Subclasses must define the number, as_seconds and length_in_seconds attributes.
 
     Attribtues:
         number (int): The numeric index of the object in its parent group
@@ -225,7 +225,7 @@ class datetime(DateObject):
         ).format(self)
 
     @property
-    def date(self):
+    def date_short(self):
         if self.season.number == 9:
             season = 'H'
         else:
@@ -250,19 +250,25 @@ class datetime(DateObject):
 
     @property
     def time_short(self):
-        return "{name}, {day}{suffix} of the {season}, {year} {era} {time}".format(
+        return "{short} {time}".format(
+            short=self.short,
+            time=self.time
+        )
+
+    @property
+    def date(self):
+        return self.short + ' ' + self.time_short
+
+    @property
+    def short(self):
+        return "{name}, {day}{suffix} of the {season}, {year} {era}".format(
             name=self.day.name,
             day=self.day.day_of_season,
             suffix=_suffix(self.day.day_of_season),
             season=self.season.name,
             year=self.year,
             era=self.era.short,
-            time=self.time
         )
-
-    @property
-    def short(self):
-        return self.time_short
 
     @property
     def as_seconds(self):
@@ -866,6 +872,6 @@ class parser:
 
 
 # helpful shortcuts for importing and hints for the parser
-now = datetime(year=3207, season=1, day=1, era=3)
+now = datetime(year=3207, season=1, day=2, era=3)
 today = now
 yesterday = today - Day.length_in_seconds

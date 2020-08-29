@@ -135,5 +135,20 @@ class Timeline:
                 description = 'REDACTED'
             yield(f'| *{event.timestamp.numeric_date} {event.timestamp.date}* | {description}\n')
 
+    @property
+    def today(self):
+        return self._events['Today'].timestamp
+
+    def forward(self, days=1):
+        """forward
+
+        Description:
+            Move the current date forward one day.
+        """
+        new_date = self.today + (days * telisaran.Day.length_in_seconds)
+        self._add('Today', new_date, redacted=False)
+        self._write()
+        return new_date
+
     def __str__(self):
         return self.list
