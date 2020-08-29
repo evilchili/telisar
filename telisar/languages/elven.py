@@ -22,6 +22,9 @@ class Elven(BaseLanguage):
     last_consonants = ['t', 's', 'm', 'n', 'l', 'r', 'd', 'a', 'th']
     last_affixes = []
 
+    syllable_template = ('c', 'v', 'c', 'V', 'C', 'v')
+    minimum_length = 4
+
     _middle_clusters = re.compile(
         r'\S?[cc|ht|hty|kd|kl|km|kp|kt|kv|kw|ky|lc|ld|lf|ll|lm|lp|lt|lv|lw|ly|mb|mm|mp|my|' +
         r'nc|nd|ng|ngw|nn|nt|nty|nw|ny|ps|pt|rc|rd|rm|rn|rp|rqu|rr|rs|rt|rty|rw|ry|sc|squ|ss|ts|tt|th|tw|ty]+\S?'

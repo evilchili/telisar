@@ -13,33 +13,39 @@ class LanguageException(Exception):
 
 class SyllableFactory:
 
-    def __init__(self, template, weights, vowels, consonants, affixes):
+    def __init__(self, template, weights, prefixes, vowels, consonants, suffixes, affixes):
         self.template = template
         self.weights = weights
         self.grapheme = {
             'chars': {
+                'p': [x.char for x in prefixes],
                 'c': [x.char for x in consonants],
                 'v': [x.char for x in vowels],
+                's': [x.char for x in suffixes],
                 'a': [x.char for x in affixes]
             },
             'weights': {
+                'p': [x.weight for x in prefixes],
                 'c': [x.weight for x in consonants],
                 'v': [x.weight for x in vowels],
+                's': [x.weight for x in suffixes],
                 'a': [x.weight for x in affixes]
             }
         }
 
-    def graphemes(self):
-        for chars in [v for v in self.grapheme['chars'].values()]:
+    def _filtered_graphemes(self, key):
+        return [(k, v) for (k, v) in self.grapheme['chars'].items() if k in key]
+
+    def graphemes(self, key='apcvs'):
+        for _, chars in self._filtered_graphemes(key):
             for char in chars:
                 yield char
 
-    def is_valid(self, chars):
-        return (
-            chars in self.grapheme['chars']['c'] or
-            chars in self.grapheme['chars']['v'] or
-            chars in self.grapheme['chars']['a']
-        )
+    def is_valid(self, chars, key='apcvs'):
+        for grapheme_type, _ in self._filtered_graphemes(key):
+            if chars in self.grapheme['chars'][grapheme_type]:
+                return True
+        return False
 
     def get(self):
         """
@@ -49,6 +55,8 @@ class SyllableFactory:
         for t in self.template:
             if t.islower() and random.random() < 0.5:
                 continue
+            if '|' in t:
+                t = random.choice(t.split('|'))
             t = t.lower()
             syllable = syllable + random.choices(self.grapheme['chars'][t], self.grapheme['weights'][t])[0]
         return syllable
@@ -70,11 +78,11 @@ class WordFactory:
         total_syllables = self.random_syllable_count()
         seq = []
         while not self.language.validate_sequence(seq, total_syllables):
-            seq = [self.language.first_syllable.get()]
+            seq = [self.language.syllable.get()]
             while len(seq) < total_syllables - 2:
                 seq.append(self.language.syllable.get())
             if len(seq) < total_syllables:
-                seq.append(self.language.last_syllable.get())
+                seq.append(self.language.syllable.get())
         return ''.join(seq)
 
     def __str__(self):
@@ -107,17 +115,12 @@ class BaseLanguage:
         [0, 1]    - Names must have exactly two syllables
     """
 
+    affixes = []
     vowels = []
     consonants = []
-    affixes = []
 
-    first_vowels = vowels
-    first_consonants = consonants
-    first_affixes = affixes
-
-    last_vowels = vowels
-    last_consonants = consonants
-    last_affixes = affixes
+    prefixes = vowels + consonants
+    suffixes = vowels + consonants
 
     syllable_template = ('C', 'V')
     syllable_weights = [1, 1]
@@ -131,31 +134,17 @@ class BaseLanguage:
         self.syllable = SyllableFactory(
             template=self.syllable_template,
             weights=self.syllable_weights,
+            prefixes=[grapheme(char=c, weight=1) for c in self.__class__.prefixes],
+            suffixes=[grapheme(char=c, weight=1) for c in self.__class__.suffixes],
             vowels=[grapheme(char=c, weight=1) for c in self.__class__.vowels],
             consonants=[grapheme(char=c, weight=1) for c in self.__class__.consonants],
             affixes=[grapheme(char=c, weight=1) for c in self.__class__.affixes]
         )
 
-        self.first_syllable = SyllableFactory(
-            template=self.syllable_template,
-            weights=self.syllable_weights,
-            vowels=[grapheme(char=c, weight=1) for c in self.__class__.first_vowels],
-            consonants=[grapheme(char=c, weight=1) for c in self.__class__.first_consonants],
-            affixes=[grapheme(char=c, weight=1) for c in self.__class__.first_affixes]
-        )
 
-        self.last_syllable = SyllableFactory(
-            template=self.syllable_template,
-            weights=self.syllable_weights,
-            vowels=[grapheme(char=c, weight=1) for c in self.__class__.last_vowels],
-            consonants=[grapheme(char=c, weight=1) for c in self.__class__.last_consonants],
-            affixes=[grapheme(char=c, weight=1) for c in self.__class__.last_affixes]
-        )
-
-
-    def _valid_syllable(self, syllable, text, reverse=False):
+    def _valid_syllable(self, syllable, text, key='apcvs', reverse=False):
         length = 0
-        for seq in syllable.graphemes():
+        for seq in reverse(sorted(syllable.graphemes(key=key), key=len)):
             length = len(seq)
             substr = text[-1 * length:] if reverse else text[0:length]
             if substr == seq:
@@ -164,22 +153,21 @@ class BaseLanguage:
 
     def is_valid(self, text):
 
-        affixes = set(self.affixes + self.first_affixes + self.last_affixes)
         for part in text.lower().split(' '):
 
-            if part in affixes:
+            if part in self.affixes:
                 continue
 
             if len(part) < self.minimum_length:
                 self._logger.debug(f"'{part}' too short; must be {self.minimum_length} characters.")
                 return False
 
-            first_offset = self._valid_syllable(self.first_syllable, part)
+            first_offset = self._valid_syllable(self.syllable, text=part, key='p')
             if first_offset is False:
                 self._logger.debug(f"'{part}' is not a valid syllable.")
                 return False
 
-            last_offset = self._valid_syllable(self.last_syllable, part, reverse=True)
+            last_offset = self._valid_syllable(self.last_syllable, text=part, key='s', reverse=True)
             if last_offset is False:
                 self._logger.debug(f"'{part}' is not a valid syllable.")
                 return False
@@ -187,7 +175,7 @@ class BaseLanguage:
 
             while first_offset < last_offset:
                 middle = part[first_offset:last_offset]
-                new_offset = self._valid_syllable(self.syllable, middle)
+                new_offset = self._valid_syllable(self.syllable, text=middle, key='cv')
                 if new_offset is False:
                     self._logger.debug(f"'{middle}' is not a valid middle sequence.")
                     return False

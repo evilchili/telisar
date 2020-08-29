@@ -1,4 +1,5 @@
 import os
+import random
 import dotenv
 import telisar.bot.hammer as _hammer
 import telisar.reckoning.calendar as _calendar
@@ -42,6 +43,33 @@ def npc(people='elf', count=1):
 
     for _ in range(count):
         print(module.NPC())
+
+
+def text(language='common', words=50):
+    try:
+        module = _import_module(f'telisar.languages.{language}')
+        lang = getattr(module, language.capitalize())()
+    except AttributeError:
+        print(f'Unsupported Language: {language}.')
+        return
+
+    phrases = []
+    phrase = []
+    for word in [lang.word() for _ in range(words)]:
+        phrase.append(str(word))
+        if len(phrase) >= random.randint(1, 12):
+            phrases.append(' '.join(phrase))
+            phrase = []
+    if phrase:
+        phrases.append(' '.join(phrase))
+
+    paragraph = phrases[0].capitalize()
+    for phrase in phrases[1:]:
+        if random.choice([0, 0, 1]):
+            paragraph = paragraph + random.choice('?!.') + ' ' + phrase.capitalize()
+        else:
+            paragraph = paragraph + ', ' + phrase
+    print(f"{paragraph}.")
 
 
 def bot():
