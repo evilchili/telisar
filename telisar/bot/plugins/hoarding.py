@@ -1,7 +1,6 @@
-import os
 import dice
 from telisar.bot.plugins.base import Plugin, message_parts
-from telisar.bag_of_hoarding import HoardItem, DATA_PATH_VARIABLE
+from telisar.bag_of_hoarding import HoardItem
 
 
 class BagOfHoarding(Plugin):
@@ -17,16 +16,6 @@ class BagOfHoarding(Plugin):
     def __init__(self):
         self._data_path = None
         super().__init__()
-
-    def check_config(self):
-        """
-        Check the environment is properly configured.
-        """
-        self._data_path = os.environ.get(DATA_PATH_VARIABLE, None)
-        if not self._data_path:
-            self.logger.error(f"{DATA_PATH_VARIABLE} not defined.")
-            return False
-        return True
 
     def cmd_hoard(self):
         """
