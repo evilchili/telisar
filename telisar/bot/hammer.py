@@ -71,12 +71,19 @@ class Hammer(discord.Client):
         # process the message using a plugin. If the plugin generates a response, send it.
         try:
             response = plugin.run(message)
-            if response:
-                if isinstance(response, types.GeneratorType):
-                    for res in response:
+            if not response:
+                return
+
+            if isinstance(response, types.GeneratorType) or isinstance(response, list):
+                for res in response:
+                    if isinstance(res, str):
                         await message.channel.send(res)
-                else:
-                    await message.channel.send(response)
-        except Exception:
+                    elif isinstance(res, discord.Embed):
+                        await message.channel.send(embed=res)
+            elif isinstance(response, discord.Embed):
+                await message.channel.send(embed=response)
+            else:
+                await message.channel.send(response)
+        except Exception as e:
             logging.error("An error occurred executing the plugin.", exc_info=True)
-            await message.channel.send("I AM ERROR.")
+            await message.channel.send(f"I AM ERROR: {e}")
