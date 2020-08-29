@@ -1,4 +1,0 @@
-#!/usr/bin/env python3
-from telisar.cli import bot
-
-bot()
