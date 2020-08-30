@@ -2,13 +2,14 @@ import os
 import re
 import discord
 import html2markdown
+import slugify
 
 from telisar.bot.plugins.base import Plugin, message_parts
 from telisar import search
 
 SOURCE_PATH_VARIABLE = 'WEBSITE_SOURCE_PATH'
 DATA_PATH_VARIABLE = 'SEARCH_INDEX_PATH'
-WEBSITE_URL = 'https://telisar.evilchi.li/'
+WEBSITE_URL = 'https://telisar.evilchi.li'
 
 
 class Search(Plugin):
@@ -46,7 +47,9 @@ class Search(Plugin):
         return self._searcher
 
     def url(self, result):
-        slug = result['filename'].split('/')[-1][:-3]
+        slug = result['path'].split('/')[-1][:-3]
+        slug = slug.replace("'", '')
+        slug = slugify.slugify(slug, separator='_')
         return f"{WEBSITE_URL}/posts/{slug}"
 
     def embed_formatter(self, search_terms, results, count):

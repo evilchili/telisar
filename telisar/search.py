@@ -1,7 +1,8 @@
 from whoosh import index
 from whoosh.fields import Schema, TEXT, KEYWORD, ID
-from whoosh.qparser import QueryParser
+from whoosh.qparser import MultifieldParser
 
+import yaml
 import textwrap
 import html2markdown
 import os
@@ -13,14 +14,15 @@ class Indexer:
     Create or update the search index.
     """
     schema = Schema(
-        filename=ID(stored=True),
-        title=TEXT(stored=True),
+        path=ID(stored=True),
+        title=TEXT(stored=True, field_boost=3.0),
         content=TEXT(stored=True),
-        tags=KEYWORD
+        tags=KEYWORD(stored=True, lowercase=True, field_boost=2.0),
     )
 
     def __init__(self, source_path, data_path):
         self._index = None
+        self._writer = None
         self._source_path = source_path
         self._data_path = data_path
 
@@ -35,21 +37,32 @@ class Indexer:
                 self._index = index.open_dir(self._data_path)
         return self._index
 
-    def _add_to_index(self, ix, path):
-        writer = ix.writer()
-        with open(path) as post:
-            writer.add_document(
-                filename=path,
-                title=path,
-                content=post.read(),
-                tags='session',
-            )
-            writer.commit()
+    def parse_hugo_article(self, path):
+        in_metadata = False
+        metadata = ''
+        content = ''
+        with open(path) as fh:
+            for line in fh:
+                if line == '---\n':
+                    in_metadata = not in_metadata
+                    continue
+                if in_metadata:
+                    metadata = metadata + line
+                else:
+                    content = content + line
+        doc = yaml.safe_load(metadata)
+        doc['path'] = path
+        doc['content'] = content
+        doc = {k: doc[k] for (k, v) in self.schema.items()}
+        return doc
 
     def build(self, index):
-        for root, dirs, files in os.walk(self._source_path):
-            for filename in files:
-                self._add_to_index(index, os.path.join(root, filename))
+        with self.index.writer() as w:
+            for root, dirs, files in os.walk(self._source_path):
+                for filename in files:
+                    path = os.path.join(root, filename)
+                    print(path)
+                    w.add_document(**self.parse_hugo_article(path))
 
 
 class Searcher:
@@ -58,27 +71,31 @@ class Searcher:
     """
 
     def __init__(self, source_path, data_path):
-        self.ix = Indexer(source_path, data_path)
+        self._ix = Indexer(source_path, data_path)
+
+    def build(self):
+        self._ix.build(self._ix.index)
 
     def search(self, search_terms, count=5, formatter=None):
         """
         Query the search index and return an array of text output showing highlghted matches.
         """
-        parser = QueryParser("content", schema=self.ix.schema)
+        parser = MultifieldParser(["title", "tags", "content"], schema=self._ix.schema)
         query = parser.parse(' '.join(search_terms))
 
         count = int(count)
 
         if not formatter:
-            formatter = self.markdown_formatter
+            formatter = Searcher._markdown_formatter
 
-        with self.ix.index.searcher() as searcher:
+        with self._ix.index.searcher() as searcher:
             results = searcher.search(query)
             results.fragmenter.maxchars = 300
             results.fragmenter.surround = 50
             return formatter(search_terms, results, count)
 
-    def markdown_formatter(self, search_terms, results, count):
+    @staticmethod
+    def _markdown_formatter(search_terms, results, count):
         """
         Prepare an array of text output fromm a result set.
         """
