@@ -6,7 +6,7 @@ import pytest
 
 @pytest.fixture
 def env(monkeypatch):
-    monkeypatch.setenv(bag_of_hoarding.DATA_PATH_VARIABLE, 'data')
+    monkeypatch.setenv(bag_of_hoarding.DATA, 'data')
 
 
 @pytest.fixture
@@ -25,4 +25,4 @@ def test_run(plugin, message, expected_lines):
 
 
 def test_HoardItem(env):
-    assert bag_of_hoarding.HoardItem((bag_of_hoarding.DATA_PATH_VARIABLE))
+    assert bag_of_hoarding.HoardItem()

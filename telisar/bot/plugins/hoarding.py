@@ -31,7 +31,7 @@ class BagOfHoarding(Plugin):
         Return a list of one or more random items from the Bag.
         """
         for i in range(count):
-            yield HoardItem()
+            yield str(HoardItem())
 
     def run(self, message):
         """
