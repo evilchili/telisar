@@ -5,6 +5,7 @@ import telisar.bot.hammer as _hammer
 import telisar.reckoning.calendar as _calendar
 import telisar.reckoning.campaign as _campaign
 import telisar.bag_of_hoarding as _hoard
+import telisar.crypto as _crypto
 
 from importlib import import_module as _import_module
 
@@ -70,6 +71,10 @@ def text(language='common', words=50):
         else:
             paragraph = paragraph + ', ' + phrase
     print(f"{paragraph}.")
+
+
+def cipher():
+    return _crypto.Cipher()
 
 
 def bot():
