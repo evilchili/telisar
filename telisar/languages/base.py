@@ -129,7 +129,6 @@ class BaseLanguage:
 
     def __init__(self):
         self._logger = logging.getLogger()
-        self._logger.setLevel(logging.DEBUG)
 
         self.syllable = SyllableFactory(
             template=self.syllable_template,

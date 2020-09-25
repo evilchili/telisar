@@ -6,10 +6,13 @@ import telisar.reckoning.calendar as _calendar
 import telisar.reckoning.campaign as _campaign
 import telisar.bag_of_hoarding as _hoard
 import telisar.crypto as _crypto
+import logging
 
 from importlib import import_module as _import_module
 
 dotenv.load_dotenv()
+
+logging.basicConfig(level=logging.WARN)
 
 
 def calendar():
