@@ -144,6 +144,8 @@ class ElvenPerson(Elven):
             self.place()
         )
 
+    person = word
+
 
 class HighElvenPerson(ElvenPerson):
     """
@@ -160,3 +162,5 @@ class HighElvenPerson(ElvenPerson):
             random.choice(self.last_affixes),
             HighElvenSurname().word()
         )
+
+    person = word

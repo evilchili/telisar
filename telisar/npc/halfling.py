@@ -6,13 +6,11 @@ from telisar.npc.base import BaseNPC
 
 class NPC(BaseNPC):
 
+    ancestry = 'Halfling'
     language = halfling.Halfling()
 
     @property
-    def full_name(self):
-         true_name = ' '.join([str(x).capitalize() for x in self.language.person()])
-         return f"{true_name} ({self.nickname})"
-
-    @property
     def nickname(self):
-        return random.choice(self.language.nicknames).capitalize()
+        if not self._nickname:
+            self._nickname = random.choice(self.language.nicknames).capitalize()
+        return self._nickname

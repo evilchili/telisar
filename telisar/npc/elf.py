@@ -4,6 +4,7 @@ from telisar.npc.base import BaseNPC
 
 class NPC(BaseNPC):
 
+    ancestry = 'Elf'
     language = elven.ElvenPerson()
 
     @property
