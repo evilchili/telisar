@@ -61,7 +61,6 @@ class Indexer:
             for root, dirs, files in os.walk(self._source_path):
                 for filename in files:
                     path = os.path.join(root, filename)
-                    print(path)
                     w.add_document(**self.parse_hugo_article(path))
 
 
@@ -95,17 +94,27 @@ class Searcher:
             return formatter(search_terms, results, count)
 
     @staticmethod
+    def _dedupe(results):
+        res = {}
+        for result in results:
+            res[result['title']] = result
+        return list(res.values())
+
+    @staticmethod
     def _markdown_formatter(search_terms, results, count):
         """
         Prepare an array of text output fromm a result set.
         """
-        if len(results) < count:
-            count = len(results)
+        results = Searcher._dedupe(results)
+        total = len(results)
+
+        if total < count:
+            count = total
 
         if count == 0:
             return [f"Your query {search_terms} yielded no results."]
 
-        output = [f"Your query {search_terms} yielded {count} results. Showing the top {count}:"]
+        output = [f"Your query {search_terms} yielded {total} results. Showing the top {count}:"]
 
         for result in results[:count]:
             text = result.highlights("content", top=2)

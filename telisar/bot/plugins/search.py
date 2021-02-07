@@ -54,12 +54,16 @@ class Search(Plugin):
 
     def embed_formatter(self, search_terms, results, count):
 
-        if len(results) < count:
-            count = len(results)
-        if count == 0:
-            return f"Query {search_terms} yielded no results."
+        results = self.searcher._dedupe(results)
+        total = len(results)
 
-        output = [f"Query {search_terms} yielded {len(results)} results. Showing the top {count}:"]
+        if total < count:
+            count = total
+
+        if count == 0:
+            return [f"Query {search_terms} yielded no results."]
+
+        output = [f"Query {search_terms} yielded {total} results. Showing the top {count}:"]
         for result in results[:count]:
 
             text = result.highlights("content", top=2)
