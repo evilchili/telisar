@@ -103,14 +103,16 @@ class Searcher:
             count = len(results)
 
         if count == 0:
-            yield f"Your query {search_terms} yielded no results."
-            return
+            return [f"Your query {search_terms} yielded no results."]
 
-        yield f"Your query {search_terms} yielded {count} results. Showing the top {count}:"
+        output = [f"Your query {search_terms} yielded {count} results. Showing the top {count}:"]
 
         for result in results[:count]:
             text = result.highlights("content", top=2)
             text = re.sub(r'<b class=".+?">', '<b>', text)
             text = html2markdown.convert(text)
 
-            yield result['title'] + '\n' + textwrap.indent(textwrap.fill(f'...{text}...', width=120), prefix='    ')
+            output.append(result['title'] + '\n' +
+                          textwrap.indent(textwrap.fill(f'...{text}...', width=120), prefix='    '))
+
+        return output
