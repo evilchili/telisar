@@ -91,7 +91,7 @@ class CLI:
         print(f"{paragraph}.")
 
     def cipher(self):
-        return crypto.Cipher()
+        return crypto.ElethisCipher()
 
     def bot(self):
         """
