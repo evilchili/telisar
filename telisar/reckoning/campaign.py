@@ -133,7 +133,7 @@ class Timeline:
         for (description, event) in sorted(self._events.items(), key=lambda e: e[1].timestamp):
             if event.redacted:
                 description = 'REDACTED'
-            yield(f'| *{event.timestamp.numeric_date} {event.timestamp.date}* | {description}\n')
+            yield(f'| *{event.timestamp.numeric_date}* | {description}\n')
 
     @property
     def today(self):

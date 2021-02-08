@@ -872,6 +872,6 @@ class parser:
 
 
 # helpful shortcuts for importing and hints for the parser
-now = datetime(year=3207, season=1, day=2, era=3)
+now = datetime(year=3207, season=1, day=5, era=3)
 today = now
 yesterday = today - Day.length_in_seconds
