@@ -51,6 +51,11 @@ class BaseNPC:
         self._age = None
         self._voice = None
 
+        self._tail = False
+        self._horns = False
+        self._fangs = False
+        self._wings = False
+
         # character
         self._flaw = None
         self._goal = None
@@ -114,6 +119,11 @@ class BaseNPC:
 
     @property
     def nickname(self):
+        if self._nickname is None and hasattr(self.language, 'nicknames'):
+            try:
+                self._nickname = random.choice(self.language.nicknames).capitalize()
+            except IndexError:
+                self._nickname = False
         return self._nickname
 
     @property
@@ -122,19 +132,19 @@ class BaseNPC:
 
     @property
     def flaw(self):
-        if not self._flaw:
+        if self._flaw is None:
             self._flaw = random.choice(traits.flaws)
         return self._flaw
 
     @property
     def goal(self):
-        if not self._goal:
+        if self._goal is None:
             self._goal = random.choice(traits.goals)
         return self._goal
 
     @property
     def personality(self):
-        if not self._personality:
+        if self._personality is None:
             self._personality = ', '.join([
                 random.choice(traits.personality),
                 random.choice(traits.personality),
@@ -144,25 +154,25 @@ class BaseNPC:
 
     @property
     def eyes(self):
-        if not self._eyes:
+        if self._eyes is None:
             self._eyes = ', '.join([random.choice(traits.eye_shape), random.choice(traits.eye_color)])
         return self._eyes
 
     @property
     def skin_color(self):
-        if not self._skin_color:
+        if self._skin_color is None:
             self._skin_color = random.choice(traits.skin_color)
         return self._skin_color
 
     @property
     def skin_tone(self):
-        if not self._skin_tone:
+        if self._skin_tone is None:
             self._skin_tone = random.choice(traits.skin_tone)
         return self._skin_tone
 
     @property
     def hair(self):
-        if not self._hair:
+        if self._hair is None:
             self._hair = ' '.join([random.choice(traits.hair_style), random.choice(traits.hair_color)])
         return self._hair
 
@@ -174,45 +184,69 @@ class BaseNPC:
 
     @property
     def facial_structure(self):
-        if not self._facial_structure:
+        if self._facial_structure is None:
             self._facial_structure = random.choice(traits.facial_structure)
         return self._facial_structure
 
     @property
     def lips(self):
-        if not self._lips:
+        if self._lips is None:
             self._lips = random.choice(traits.lips)
         return self._lips
 
     @property
     def teeth(self):
-        if not self._teeth:
+        if self._teeth is None:
             self._teeth = random.choice(traits.teeth)
         return self._teeth
 
     @property
     def nose(self):
-        if not self._nose:
+        if self._nose is None:
             self._nose = random.choice(traits.nose)
         return self._nose
 
     @property
     def eyebrows(self):
-        if not self._eyebrows:
+        if self._eyebrows is None:
             self._eyebrows = random.choice(traits.eyebrows)
         return self._eyebrows
 
     @property
     def facial_hair(self):
-        if not self._facial_hair:
+        if self._facial_hair is None:
             self._facial_hair = random.choice(traits.facial_hair)
         return self._facial_hair
 
     @property
     def body(self):
-        if not self._body:
+        if self._body is None:
             self._body = random.choice(traits.body)
         return self._body
+
+    @property
+    def tail(self):
+        if self._tail is None:
+            self._tail = random.choice(traits.tail)
+        return self._tail
+
+    @property
+    def horns(self):
+        if self._horns is None:
+            self._horns = random.choice(traits.horns)
+        return self._horns
+
+    @property
+    def wings(self):
+        if self._wings is None:
+            self._wings = random.choice(traits.wings)
+        return self._wings
+
+    @property
+    def fangs(self):
+        if self._fangs is None:
+            self._fangs = random.choice(traits.fangs)
+        return self._fangs
 
     @property
     def age(self):
@@ -232,24 +266,29 @@ class BaseNPC:
             f"{self.full_name} ({self.pronouns}) is {a_or_an(self.age)} {self.age}, {self.body} "
             f"{self.ancestry.lower()} with {self.hair} hair, {self.eyes} eyes and {self.skin_color} skin."
         )
-
-        trait = random.choice([
-            f'{self.eyebrows} eyebrows',
-            self.facial_hair,
-            f'a {self.nose} nose',
-            f'{self.lips} lips',
-            f'{self.teeth} teeth',
-            self.facial_structure,
-        ])
-
+        trait = None
+        while not trait:
+            trait = random.choice([
+                f'{self.eyebrows} eyebrows' if self.eyebrows else None,
+                self.facial_hair if self.facial_hair else None,
+                f'a {self.nose} nose' if self.nose else None,
+                f'{self.lips} lips' if self.lips else None,
+                f'{self.teeth} teeth' if self.teeth else None,
+                self.facial_structure if self.facial_structure else None,
+            ])
         desc = desc + ' ' + f"Their face is {self.face}, with {trait}."
-        return '\n'.join(textwrap.wrap(desc, width=120))
+        if self.tail:
+            desc = desc + f" Their tail is {self.tail}."
+        if self.horns:
+            desc = desc + f" Their horns are {self.horns}."
+        return desc
 
     @property
     def character_sheet(self):
+        desc =  '\n'.join(textwrap.wrap(self.description, width=120))
         return f"""\
 
-{self.description}
+{desc}
 
 Physical Traits:
 
@@ -259,6 +298,10 @@ Eyes:  {self.eyes}
 Skin:  {self.skin_tone}, {self.skin_color}
 Hair:  {self.hair}
 Body:  {self.body}
+Tail:  {self.tail}
+Horns:  {self.horns}
+Fangs:  {self.fangs}
+Wings:  {self.wings}
 Voice: {self.voice}
 
 Stats:
