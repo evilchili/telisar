@@ -9,7 +9,7 @@ from telisar import search
 
 SOURCE_PATH_VARIABLE = 'WEBSITE_SOURCE_PATH'
 DATA_PATH_VARIABLE = 'SEARCH_INDEX_PATH'
-WEBSITE_URL = 'https://telisar.evilchi.li'
+WEBSITE_URL = 'https://froghat.club'
 
 
 class Search(Plugin):

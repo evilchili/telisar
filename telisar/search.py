@@ -71,6 +71,7 @@ class Searcher:
 
     def __init__(self, source_path, data_path):
         self._ix = Indexer(source_path, data_path)
+        print(f"Searcher configrued with source: {source_path}, data: {data_path}")
 
     def build(self):
         self._ix.build(self._ix.index)
