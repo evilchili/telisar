@@ -45,22 +45,22 @@ class Memory(Plugin):
             f.write(json.dumps(self._memory, indent=2).encode())
         return True
 
-    def cmd_remember(self, term, definition):
+    def cmd_remember(self, author, term, definition):
         """
         Remember a definition.
         """
         term = term.strip().lower()
-        self._memory[term] = definition.strip()
+        self._memory[term] = (author.name, definition.strip())
         self.write_memory()
-        yield f"Okay, I'll remember '{term}' is {definition}."
+        yield f"Okay, I'll remember {author.name} told me '{term}' is {definition}."
 
     def cmd_recall(self, term):
         """
         Recall a definition.
         """
         try:
-            definition = self._memory[term.strip().lower()]
-            yield f"{term}: {definition}"
+            (author, definition) = self._memory[term.strip().lower()]
+            yield f"**{term}**: {author} told me it is {definition}"
         except KeyError:
             yield f"I don't know what {term} is."
 
@@ -80,4 +80,4 @@ class Memory(Plugin):
 
         if '=' in parts:
             (term, definition) = ' '.join(parts).split('=', 1)
-            return self.cmd_remember(term, definition)
+            return self.cmd_remember(message.author, term, definition)

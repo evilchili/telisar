@@ -79,16 +79,17 @@ class Hammer(discord.Client):
         try:
             response = None
             plugin = self.plugin_manager.get_plugin(message)
+            logging.debug(f"Trying plugin {plugin}")
             if plugin:
                 response = plugin.run(message)
                 if not response:
                     return
-
-            for plugin in self.plugin_manager.get_default_plugins():
-                response = plugin.run(message)
-                if response:
-                    break
-
+            else:
+                for plugin in self.plugin_manager.get_default_plugins():
+                    logging.debug(f"Trying plugin {plugin}")
+                    response = plugin.run(message)
+                    if response:
+                        break
             if response:
                 await self.send_response(message, response)
 
