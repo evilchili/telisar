@@ -44,6 +44,18 @@ class Hammer(discord.Client):
         """
         super().run(self._token)
 
+    async def send_response(self, message, response):
+        if isinstance(response, types.GeneratorType) or isinstance(response, list):
+            for res in response:
+                if isinstance(res, str):
+                    await message.channel.send(res)
+                elif isinstance(res, discord.Embed):
+                    await message.channel.send(embed=res)
+        elif isinstance(response, discord.Embed):
+            await message.channel.send(embed=response)
+        else:
+            await message.channel.send(response)
+
     async def on_ready(self):
         logging.debug(f'Bot "{self.user}" has connected to Discord on guild "{self.guilds[0]}".')
 
@@ -64,26 +76,22 @@ class Hammer(discord.Client):
             return
 
         #  If no plugin can handle the message, ignore it.
-        plugin = self.plugin_manager.get_plugin(message)
-        if not plugin:
-            return
-
-        # process the message using a plugin. If the plugin generates a response, send it.
         try:
-            response = plugin.run(message)
-            if not response:
-                return
+            response = None
+            plugin = self.plugin_manager.get_plugin(message)
+            if plugin:
+                response = plugin.run(message)
+                if not response:
+                    return
 
-            if isinstance(response, types.GeneratorType) or isinstance(response, list):
-                for res in response:
-                    if isinstance(res, str):
-                        await message.channel.send(res)
-                    elif isinstance(res, discord.Embed):
-                        await message.channel.send(embed=res)
-            elif isinstance(response, discord.Embed):
-                await message.channel.send(embed=response)
-            else:
-                await message.channel.send(response)
+            for plugin in self.plugin_manager.get_default_plugins():
+                response = plugin.run(message)
+                if response:
+                    break
+
+            if response:
+                await self.send_response(message, response)
+
         except Exception as e:
             logging.error("An error occurred executing the plugin.", exc_info=True)
             await message.channel.send(f"I AM ERROR: {e}")

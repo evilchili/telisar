@@ -76,6 +76,11 @@ class PluginManager(Plugin):
         except KeyError:
             pass
 
+    def get_default_plugins(self):
+        for obj in self.command_map.values():
+            if getattr(obj, 'receive_all', False):
+                yield obj
+
 
 class Help(Plugin):
     """
