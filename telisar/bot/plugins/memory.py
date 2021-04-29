@@ -60,7 +60,7 @@ class Memory(Plugin):
         """
         try:
             (author, definition) = self._memory[term.strip().lower()]
-            yield f"**{term}**: {author} told me it is {definition}"
+            yield f"I remember {author} told me **{term}** is {definition}"
         except KeyError:
             yield f"I don't know what {term} is."
 
