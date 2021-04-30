@@ -76,7 +76,7 @@ class Memory(Plugin):
             return self.cmd_recall(' '.join(parts))
 
         msg = f"{_} {' '.join(parts)}".strip()
-        if msg[-1][-1] == '?':
+        if msg[-1] == '?':
             return self.cmd_recall(msg[:-1])
 
         if '=' in parts:
