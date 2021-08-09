@@ -25,7 +25,7 @@ class NPC(Plugin):
         elif parts[0] == 'names':
             return self.cmd_names(*parts[1:])
         else:
-            return self.cmd_npc(*parts[1:])
+            return self.cmd_npc(*parts)
 
     def cmd_names(self, ancestry=None, count=1):
         for _ in range(int(count)):
