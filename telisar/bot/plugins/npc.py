@@ -30,7 +30,7 @@ class NPC(Plugin):
     def cmd_names(self, ancestry=None, count=1):
         for _ in range(int(count)):
             npc = npc_type(ancestry)()
-            yield f"{npc.full_name} ({npc.language})"
+            yield npc.full_name
 
     def cmd_npc(self, ancestry=None, randomize=False):
         yield generate_npc(
