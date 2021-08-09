@@ -15,7 +15,7 @@ class NPC(Plugin):
     help_text = 'Generate randomized NPCs.'
 
     def run(self, message):
-        (_, *parts) = message_parts(message)
+        (_, parts) = message_parts(message)
         if not parts:
             return self.cmd_npc(*parts)
         try:
