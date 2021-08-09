@@ -6,8 +6,12 @@ class NPC(Plugin):
     """
     Generate NPCs and random traits.
 
-    npc [ANCESTRY] ........ Generate an NPC of the specified ancestry.
-    npc names [ANCESTRY] .. Generate randomized NPC names.
+    Supported ancestries:
+        dragon, drow, dwarf, elf, halfing, halforc,
+        highelf, hightiefling, human, tiefling
+
+    npc [ANCESTRY] ........ Generate an NPC of the specified ancestry or a random ancestry.
+    npc names [ANCESTRY] [COUNT].. Generate COUNT randomized NPC names. Defaults to 1 random name.
 
     """
 
@@ -18,16 +22,15 @@ class NPC(Plugin):
         (_, parts) = message_parts(message)
         if not parts:
             return self.cmd_npc(*parts)
-        try:
-            handler = getattr(self, f"cmd_{parts[0].lower()}")
-        except AttributeError:
-            self.logger.debug(f"Ignoring unsupported command: {parts[0]}")
-            return
-        return handler(*parts[1:])
+        elif parts[0] == 'names':
+            return self.cmd_names(*parts[1:])
+        else:
+            return self.cmd_npc(*parts[1:])
 
     def cmd_names(self, ancestry=None, count=1):
-        for _ in range(count):
-            yield npc_type(ancestry)().full_name
+        for _ in range(int(count)):
+            npc = npc_type(ancestry)
+            yield f"{npc.full_name} ({npc.language})"
 
     def cmd_npc(self, ancestry=None, name=None, pronouns=None, title=None, nickname=None, whereabouts="Unknown",
                 STR=None, DEX=None, CON=None, INT=None, WIS=None, CHA=None, randomize=False):
