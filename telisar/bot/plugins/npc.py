@@ -10,8 +10,8 @@ class NPC(Plugin):
         dragon, drow, dwarf, elf, halfing, halforc,
         highelf, hightiefling, human, tiefling
 
-    npc [ANCESTRY] ........ Generate an NPC of the specified ancestry or a random ancestry.
-    npc names [ANCESTRY] [COUNT].. Generate COUNT randomized NPC names. Defaults to 1 random name.
+    npc [ANCESTRY] [ROLLSTATS] ........ Generate an NPC. Defaults to random ancestry. If ROLSTATS=True, generate stats.
+    npc names [ANCESTRY] [COUNT]....... Generate COUNT randomized NPC names. Defaults to 1 random name.
 
     """
 
@@ -29,23 +29,12 @@ class NPC(Plugin):
 
     def cmd_names(self, ancestry=None, count=1):
         for _ in range(int(count)):
-            npc = npc_type(ancestry)
+            npc = npc_type(ancestry)()
             yield f"{npc.full_name} ({npc.language})"
 
-    def cmd_npc(self, ancestry=None, name=None, pronouns=None, title=None, nickname=None, whereabouts="Unknown",
-                STR=None, DEX=None, CON=None, INT=None, WIS=None, CHA=None, randomize=False):
+    def cmd_npc(self, ancestry=None, randomize=False):
         yield generate_npc(
             ancestry=ancestry,
-            names=name.split() if name else [],
-            pronouns=pronouns,
-            title=title,
-            nickname=nickname,
-            whereabouts=whereabouts,
-            STR=STR,
-            DEX=DEX,
-            CON=CON,
-            INT=INT,
-            WIS=WIS,
-            CHA=CHA,
+            whereabouts='Unknown',
             randomize=randomize
         ).character_sheet
